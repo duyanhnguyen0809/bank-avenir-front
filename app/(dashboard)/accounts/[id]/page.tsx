@@ -113,7 +113,7 @@ export default function AccountDetailsPage({ params }: AccountDetailsPageProps) 
       </div>
 
       {/* Account Info Card */}
-      <Card className={`bg-gradient-to-br ${getAccountColor(account.accountType)} text-white`}>
+      <Card className={`bg-linear-to-br ${getAccountColor(account.accountType)} text-white`}>
         <CardHeader>
           <div className="flex justify-between items-start">
             <div>

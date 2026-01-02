@@ -84,7 +84,7 @@ export default function NotificationsPage() {
         )}
       >
         <div className="flex items-start gap-3 md:gap-4">
-          <div className="flex-shrink-0 mt-1">
+          <div className="shrink-0 mt-1">
             {getNotificationIcon(notification.type)}
           </div>
           <div className="flex-1 min-w-0">
@@ -99,7 +99,7 @@ export default function NotificationsPage() {
                 <p className="text-xs md:text-sm text-gray-600 mt-1">{notification.message}</p>
               </div>
               {isUnread && (
-                <Badge className="bg-blue-500 text-white flex-shrink-0">New</Badge>
+                <Badge className="bg-blue-500 text-white shrink-0">New</Badge>
               )}
             </div>
             <div className="flex items-center justify-between mt-3">

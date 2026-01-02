@@ -58,7 +58,7 @@ export default function PortfolioPage() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+        <Card className="bg-linear-to-br from-blue-500 to-blue-600 text-white">
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 mb-2">
               <Wallet className="h-5 w-5 opacity-80" />

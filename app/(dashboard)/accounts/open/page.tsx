@@ -127,7 +127,7 @@ export default function OpenAccountPage() {
                   setValue('accountType', accountType.type as any);
                 }}
               >
-                <CardHeader className={`bg-gradient-to-br ${accountType.color} text-white`}>
+                <CardHeader className={`bg-linear-to-br ${accountType.color} text-white`}>
                   <div className="flex items-center gap-2">
                     <Icon className="h-6 w-6" />
                     <CardTitle className="text-white">{accountType.name}</CardTitle>

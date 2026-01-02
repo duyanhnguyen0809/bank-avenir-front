@@ -68,7 +68,7 @@ export default function LoanDetailPage({ params }: LoanDetailPageProps) {
 
   if (loanLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex items-center justify-center min-h-100">
         <div className="text-gray-500">Loading loan details...</div>
       </div>
     );
@@ -76,7 +76,7 @@ export default function LoanDetailPage({ params }: LoanDetailPageProps) {
 
   if (!loan) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex items-center justify-center min-h-100">
         <div className="text-gray-500">Loan not found</div>
       </div>
     );

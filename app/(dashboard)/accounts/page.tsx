@@ -103,7 +103,7 @@ export default function AccountsPage() {
       </div>
 
       {/* Total Balance Card */}
-      <Card className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white">
+      <Card className="bg-linear-to-br from-blue-600 to-indigo-700 text-white">
         <CardHeader className="p-4 md:p-6">
           <CardTitle className="text-white text-lg md:text-xl">Total Balance</CardTitle>
           <CardDescription className="text-blue-100 text-xs md:text-sm">Across all accounts</CardDescription>
@@ -141,7 +141,7 @@ export default function AccountsPage() {
                 {accountsByType.CHECKING.map((account) => (
                   <Link key={account.id} href={`/accounts/${account.id}`}>
                     <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
-                      <CardHeader className={`bg-gradient-to-br ${getAccountColor(account.accountType)} text-white p-3 md:p-6`}>
+                      <CardHeader className={`bg-linear-to-br ${getAccountColor(account.accountType)} text-white p-3 md:p-6`}>
                         <div className="flex justify-between items-start">
                           <div className="flex items-center gap-2">
                             <div className="h-5 w-5 md:h-6 md:w-6">{getAccountIcon(account.accountType)}</div>
@@ -156,7 +156,7 @@ export default function AccountsPage() {
                           <p className="text-xl md:text-2xl font-bold mt-1">{formatCurrency(account.balance)}</p>
                         </div>
                       </CardHeader>
-                      <CardContent className="p-3 md:pt-4 md:p-6 md:pt-4">
+                      <CardContent className="p-3 md:pt-4 md:p-6">
                         <div className="space-y-2 text-xs md:text-sm">
                           <div className="flex justify-between">
                             <span className="text-gray-500">IBAN</span>
@@ -194,7 +194,7 @@ export default function AccountsPage() {
                 {accountsByType.SAVINGS.map((account) => (
                   <Link key={account.id} href={`/accounts/${account.id}`}>
                     <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
-                      <CardHeader className={`bg-gradient-to-br ${getAccountColor(account.accountType)} text-white p-3 md:p-6`}>
+                      <CardHeader className={`bg-linear-to-br ${getAccountColor(account.accountType)} text-white p-3 md:p-6`}>
                         <div className="flex justify-between items-start">
                           <div className="flex items-center gap-2">
                             <div className="h-5 w-5 md:h-6 md:w-6">{getAccountIcon(account.accountType)}</div>
@@ -209,7 +209,7 @@ export default function AccountsPage() {
                           <p className="text-xl md:text-2xl font-bold mt-1">{formatCurrency(account.balance)}</p>
                         </div>
                       </CardHeader>
-                      <CardContent className="p-3 md:pt-4 md:p-6 md:pt-4">
+                      <CardContent className="p-3 md:p-6 md:pt-4">
                         <div className="space-y-2 text-xs md:text-sm">
                           <div className="flex justify-between">
                             <span className="text-gray-500">IBAN</span>
@@ -247,7 +247,7 @@ export default function AccountsPage() {
                 {accountsByType.INVESTMENT.map((account) => (
                   <Link key={account.id} href={`/accounts/${account.id}`}>
                     <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
-                      <CardHeader className={`bg-gradient-to-br ${getAccountColor(account.accountType)} text-white p-3 md:p-6`}>
+                      <CardHeader className={`bg-linear-to-br ${getAccountColor(account.accountType)} text-white p-3 md:p-6`}>
                         <div className="flex justify-between items-start">
                           <div className="flex items-center gap-2">
                             <div className="h-5 w-5 md:h-6 md:w-6">{getAccountIcon(account.accountType)}</div>
@@ -262,7 +262,7 @@ export default function AccountsPage() {
                           <p className="text-xl md:text-2xl font-bold mt-1">{formatCurrency(account.balance)}</p>
                         </div>
                       </CardHeader>
-                      <CardContent className="p-3 md:pt-4 md:p-6 md:pt-4">
+                      <CardContent className="p-3 md:pt-4 md:p-6">
                         <div className="space-y-2 text-xs md:text-sm">
                           <div className="flex justify-between">
                             <span className="text-gray-500">IBAN</span>
