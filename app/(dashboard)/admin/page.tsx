@@ -134,69 +134,69 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="h-12 w-12 rounded-lg bg-purple-100 flex items-center justify-center">
-          <Shield className="h-6 w-6 text-purple-600" />
+        <div className="h-10 w-10 md:h-12 md:w-12 rounded-lg bg-purple-100 flex items-center justify-center">
+          <Shield className="h-5 w-5 md:h-6 md:w-6 text-purple-600" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-          <p className="text-gray-500">Manage users, loans, and system settings</p>
+          <h1 className="text-2xl md:text-3xl font-bold">Admin Dashboard</h1>
+          <p className="text-sm md:text-base text-gray-500">Manage users, loans, and system settings</p>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="p-3 md:pt-6 md:p-6">
             <div className="flex items-center gap-2 mb-2">
-              <Users className="h-5 w-5 text-blue-500" />
-              <span className="text-sm text-gray-500">Total Users</span>
+              <Users className="h-4 w-4 md:h-5 md:w-5 text-blue-500" />
+              <span className="text-xs md:text-sm text-gray-500">Users</span>
             </div>
-            <div className="text-2xl font-bold">{statsLoading ? '...' : stats?.totalUsers}</div>
+            <div className="text-lg md:text-2xl font-bold">{statsLoading ? '...' : stats?.totalUsers}</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="p-3 md:pt-6 md:p-6">
             <div className="flex items-center gap-2 mb-2">
-              <CreditCard className="h-5 w-5 text-green-500" />
-              <span className="text-sm text-gray-500">Total Accounts</span>
+              <CreditCard className="h-4 w-4 md:h-5 md:w-5 text-green-500" />
+              <span className="text-xs md:text-sm text-gray-500">Accounts</span>
             </div>
-            <div className="text-2xl font-bold">{statsLoading ? '...' : stats?.totalAccounts}</div>
+            <div className="text-lg md:text-2xl font-bold">{statsLoading ? '...' : stats?.totalAccounts}</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="p-3 md:pt-6 md:p-6">
             <div className="flex items-center gap-2 mb-2">
-              <DollarSign className="h-5 w-5 text-yellow-500" />
-              <span className="text-sm text-gray-500">Active Loans</span>
+              <DollarSign className="h-4 w-4 md:h-5 md:w-5 text-yellow-500" />
+              <span className="text-xs md:text-sm text-gray-500">Loans</span>
             </div>
-            <div className="text-2xl font-bold">{statsLoading ? '...' : stats?.activeLoans}</div>
+            <div className="text-lg md:text-2xl font-bold">{statsLoading ? '...' : stats?.activeLoans}</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="p-3 md:pt-6 md:p-6">
             <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="h-5 w-5 text-purple-500" />
-              <span className="text-sm text-gray-500">Total Deposits</span>
+              <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-purple-500" />
+              <span className="text-xs md:text-sm text-gray-500">Deposits</span>
             </div>
-            <div className="text-2xl font-bold">
+            <div className="text-base md:text-2xl font-bold">
               {statsLoading ? '...' : formatCurrency(stats?.totalDeposits || 0, 'EUR')}
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="pt-6">
+        <Card className="col-span-2 md:col-span-1">
+          <CardContent className="p-3 md:pt-6 md:p-6">
             <div className="flex items-center gap-2 mb-2">
-              <DollarSign className="h-5 w-5 text-orange-500" />
-              <span className="text-sm text-gray-500">Loan Portfolio</span>
+              <DollarSign className="h-4 w-4 md:h-5 md:w-5 text-orange-500" />
+              <span className="text-xs md:text-sm text-gray-500">Portfolio</span>
             </div>
-            <div className="text-2xl font-bold">
+            <div className="text-base md:text-2xl font-bold">
               {statsLoading ? '...' : formatCurrency(stats?.totalLoanAmount || 0, 'EUR')}
             </div>
           </CardContent>
@@ -205,14 +205,15 @@ export default function AdminPage() {
 
       {/* Management Tabs */}
       <Tabs defaultValue="users" className="w-full">
-        <TabsList>
-          <TabsTrigger value="users" className="gap-2">
+        <TabsList className="w-full sm:w-auto flex-wrap h-auto">
+          <TabsTrigger value="users" className="gap-2 flex-1 sm:flex-none">
             <Users className="h-4 w-4" />
-            Users
+            <span className="hidden sm:inline">Users</span>
           </TabsTrigger>
-          <TabsTrigger value="loans" className="gap-2">
+          <TabsTrigger value="loans" className="gap-2 flex-1 sm:flex-none">
             <DollarSign className="h-4 w-4" />
-            Pending Loans
+            <span className="hidden sm:inline">Pending Loans</span>
+            <span className="sm:hidden">Loans</span>
             {pendingLoans && pendingLoans.length > 0 && (
               <Badge className="ml-1 bg-orange-500">{pendingLoans.length}</Badge>
             )}
@@ -220,46 +221,48 @@ export default function AdminPage() {
         </TabsList>
 
         {/* Users Tab */}
-        <TabsContent value="users" className="mt-6">
+        <TabsContent value="users" className="mt-4 md:mt-6">
           <Card>
-            <CardHeader>
-              <CardTitle>User Management</CardTitle>
-              <CardDescription>View and manage all registered users</CardDescription>
+            <CardHeader className="p-4 md:p-6">
+              <CardTitle className="text-lg md:text-xl">User Management</CardTitle>
+              <CardDescription className="text-xs md:text-sm">View and manage all registered users</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0 md:p-6 md:pt-0">
               {usersLoading ? (
                 <div className="text-center py-8 text-gray-500">Loading users...</div>
               ) : users && users.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Email Verified</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {users.map((u) => (
-                      <TableRow key={u.id}>
-                        <TableCell>
-                          <div className="font-medium">
-                            {u.profile.firstName} {u.profile.lastName}
-                          </div>
-                        </TableCell>
-                        <TableCell>{u.email}</TableCell>
-                        <TableCell>{getRoleBadge(u.role)}</TableCell>
-                        <TableCell>{getStatusBadge(u.status)}</TableCell>
-                        <TableCell>
-                          {u.emailConfirmed ? (
-                            <Badge className="bg-green-100 text-green-800">Verified</Badge>
-                          ) : (
-                            <Badge variant="outline">Pending</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="whitespace-nowrap">User</TableHead>
+                        <TableHead className="whitespace-nowrap hidden md:table-cell">Email</TableHead>
+                        <TableHead className="whitespace-nowrap">Role</TableHead>
+                        <TableHead className="whitespace-nowrap">Status</TableHead>
+                        <TableHead className="whitespace-nowrap hidden lg:table-cell">Email Verified</TableHead>
+                        <TableHead className="text-right whitespace-nowrap">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {users.map((u) => (
+                        <TableRow key={u.id}>
+                          <TableCell>
+                            <div className="font-medium text-sm">
+                              {u.profile.firstName} {u.profile.lastName}
+                            </div>
+                            <div className="text-xs text-gray-500 md:hidden">{u.email}</div>
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell">{u.email}</TableCell>
+                          <TableCell>{getRoleBadge(u.role)}</TableCell>
+                          <TableCell>{getStatusBadge(u.status)}</TableCell>
+                          <TableCell className="hidden lg:table-cell">
+                            {u.emailConfirmed ? (
+                              <Badge className="bg-green-100 text-green-800">Verified</Badge>
+                            ) : (
+                              <Badge variant="outline">Pending</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="sm">
@@ -305,6 +308,7 @@ export default function AdminPage() {
                     ))}
                   </TableBody>
                 </Table>
+                </div>
               ) : (
                 <div className="text-center py-8 text-gray-500">No users found</div>
               )}
@@ -315,86 +319,87 @@ export default function AdminPage() {
         {/* Pending Loans Tab */}
         <TabsContent value="loans" className="mt-6">
           <Card>
-            <CardHeader>
-              <CardTitle>Pending Loan Applications</CardTitle>
-              <CardDescription>Review and approve or reject loan applications</CardDescription>
+            <CardHeader className="p-4 md:p-6">
+              <CardTitle className="text-lg md:text-xl">Pending Loan Applications</CardTitle>
+              <CardDescription className="text-xs md:text-sm">Review and approve or reject loan applications</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0 md:p-6 md:pt-0">
               {loansLoading ? (
                 <div className="text-center py-8 text-gray-500">Loading loans...</div>
               ) : pendingLoans && pendingLoans.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Loan ID</TableHead>
-                      <TableHead className="text-right">Amount</TableHead>
-                      <TableHead className="text-right">Interest Rate</TableHead>
-                      <TableHead className="text-right">Duration</TableHead>
-                      <TableHead className="text-right">Monthly Payment</TableHead>
-                      <TableHead>Submitted</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {pendingLoans.map((loan) => (
-                      <TableRow key={loan.id}>
-                        <TableCell className="font-mono text-xs">
-                          {loan.id.slice(0, 8)}...
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {formatCurrency(loan.amount, 'EUR')}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {(loan.interestRate * 100).toFixed(2)}%
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {loan.durationMonths} months
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {formatCurrency(loan.monthlyPayment, 'EUR')}
-                        </TableCell>
-                        <TableCell>
-                          {new Date(loan.createdAt).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button size="sm" className="gap-1 bg-green-600 hover:bg-green-700">
-                                  <Check className="h-3 w-3" />
-                                  Approve
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Approve Loan</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Are you sure you want to approve this loan of{' '}
-                                    {formatCurrency(loan.amount, 'EUR')}?
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => approveLoanMutation.mutate(loan.id)}
-                                  >
-                                    Approve
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="whitespace-nowrap">Loan ID</TableHead>
+                        <TableHead className="text-right whitespace-nowrap">Amount</TableHead>
+                        <TableHead className="text-right whitespace-nowrap hidden md:table-cell">Interest</TableHead>
+                        <TableHead className="text-right whitespace-nowrap hidden lg:table-cell">Duration</TableHead>
+                        <TableHead className="text-right whitespace-nowrap hidden sm:table-cell">Monthly</TableHead>
+                        <TableHead className="whitespace-nowrap hidden lg:table-cell">Submitted</TableHead>
+                        <TableHead className="text-right whitespace-nowrap">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {pendingLoans.map((loan) => (
+                        <TableRow key={loan.id}>
+                          <TableCell className="font-mono text-xs">
+                            {loan.id.slice(0, 8)}...
+                          </TableCell>
+                          <TableCell className="text-right font-medium whitespace-nowrap">
+                            {formatCurrency(loan.amount, 'EUR')}
+                          </TableCell>
+                          <TableCell className="text-right hidden md:table-cell">
+                            {(loan.interestRate * 100).toFixed(2)}%
+                          </TableCell>
+                          <TableCell className="text-right hidden lg:table-cell">
+                            {loan.durationMonths} months
+                          </TableCell>
+                          <TableCell className="text-right hidden sm:table-cell whitespace-nowrap">
+                            {formatCurrency(loan.monthlyPayment, 'EUR')}
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell">
+                            {new Date(loan.createdAt).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-1 md:gap-2">
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button size="sm" className="gap-1 bg-green-600 hover:bg-green-700 h-7 md:h-8 text-xs md:text-sm px-2 md:px-3">
+                                    <Check className="h-3 w-3" />
+                                    <span className="hidden sm:inline">Approve</span>
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent className="max-w-[90vw] md:max-w-lg">
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Approve Loan</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to approve this loan of{' '}
+                                      {formatCurrency(loan.amount, 'EUR')}?
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => approveLoanMutation.mutate(loan.id)}
+                                    >
+                                      Approve
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
 
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button size="sm" variant="destructive" className="gap-1">
-                                  <X className="h-3 w-3" />
-                                  Reject
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Reject Loan</AlertDialogTitle>
-                                  <AlertDialogDescription>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button size="sm" variant="destructive" className="gap-1 h-7 md:h-8 text-xs md:text-sm px-2 md:px-3">
+                                    <X className="h-3 w-3" />
+                                    <span className="hidden sm:inline">Reject</span>
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent className="max-w-[90vw] md:max-w-lg">
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Reject Loan</AlertDialogTitle>
+                                    <AlertDialogDescription>
                                     Are you sure you want to reject this loan application?
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
@@ -415,6 +420,7 @@ export default function AdminPage() {
                     ))}
                   </TableBody>
                 </Table>
+                </div>
               ) : (
                 <div className="text-center py-8 text-gray-500">
                   <DollarSign className="h-12 w-12 mx-auto mb-4 opacity-50" />

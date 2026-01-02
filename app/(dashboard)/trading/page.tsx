@@ -66,14 +66,14 @@ export default function TradingPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Trading</h1>
-          <p className="text-gray-500">Buy and sell securities</p>
+          <h1 className="text-2xl md:text-3xl font-bold">Trading</h1>
+          <p className="text-gray-500 text-sm md:text-base">Buy and sell securities</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-2 sm:gap-3">
           <Link href="/trading/orders">
-            <Button variant="outline">
+            <Button variant="outline" size="sm" className="text-xs sm:text-sm">
               My Orders
               {pendingOrders > 0 && (
                 <Badge className="ml-2 bg-orange-500">{pendingOrders}</Badge>
@@ -81,13 +81,13 @@ export default function TradingPage() {
             </Button>
           </Link>
           <Link href="/trading/portfolio">
-            <Button variant="outline">My Portfolio</Button>
+            <Button variant="outline" size="sm" className="text-xs sm:text-sm">My Portfolio</Button>
           </Link>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
@@ -142,12 +142,12 @@ export default function TradingPage() {
                 className="pl-10"
               />
             </div>
-            <Tabs value={selectedType} onValueChange={setSelectedType} className="w-full md:w-auto">
-              <TabsList>
-                <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="STOCK">Stocks</TabsTrigger>
-                <TabsTrigger value="CRYPTO">Crypto</TabsTrigger>
-                <TabsTrigger value="BOND">Bonds</TabsTrigger>
+            <Tabs value={selectedType} onValueChange={setSelectedType} className="w-full sm:w-auto">
+              <TabsList className="grid grid-cols-4 w-full sm:w-auto">
+                <TabsTrigger value="all" className="text-xs sm:text-sm">All</TabsTrigger>
+                <TabsTrigger value="STOCK" className="text-xs sm:text-sm">Stocks</TabsTrigger>
+                <TabsTrigger value="CRYPTO" className="text-xs sm:text-sm">Crypto</TabsTrigger>
+                <TabsTrigger value="BOND" className="text-xs sm:text-sm">Bonds</TabsTrigger>
               </TabsList>
             </Tabs>
             <Button variant="outline" size="icon" onClick={() => refetch()}>
@@ -159,7 +159,7 @@ export default function TradingPage() {
           {isLoading ? (
             <div className="text-center py-8 text-gray-500">Loading securities...</div>
           ) : filteredSecurities && filteredSecurities.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredSecurities.map((security) => (
                 <Link key={security.id} href={`/trading/${security.id}`}>
                   <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">

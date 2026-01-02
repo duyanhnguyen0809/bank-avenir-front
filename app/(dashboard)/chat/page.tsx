@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { MessageSquare, Send, Plus, User as UserIcon } from 'lucide-react';
+import { MessageSquare, Send, Plus, User as UserIcon, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Conversation, Message } from '@/lib/types';
 
@@ -19,6 +19,7 @@ export default function ChatPage() {
   const queryClient = useQueryClient();
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [messageInput, setMessageInput] = useState('');
+  const [showConversations, setShowConversations] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Fetch conversations
@@ -120,19 +121,22 @@ export default function ChatPage() {
 
   return (
     <div className="h-[calc(100vh-120px)]">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4 md:mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Messages</h1>
-          <p className="text-gray-500">Chat with your bank advisor</p>
+          <h1 className="text-2xl md:text-3xl font-bold">Messages</h1>
+          <p className="text-sm md:text-base text-gray-500">Chat with your bank advisor</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-[calc(100%-80px)]">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 h-[calc(100%-80px)]">
         {/* Conversations List */}
-        <Card className="md:col-span-1 flex flex-col">
-          <CardHeader className="pb-2">
+        <Card className={cn(
+          "md:col-span-1 flex flex-col",
+          selectedConversation && !showConversations ? "hidden md:flex" : "flex"
+        )}>
+          <CardHeader className="pb-2 p-3 md:p-6 md:pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Conversations</CardTitle>
+              <CardTitle className="text-base md:text-lg">Conversations</CardTitle>
               {advisors && advisors.length > 0 && (
                 <Button
                   variant="ghost"
@@ -141,7 +145,7 @@ export default function ChatPage() {
                   className="gap-1"
                 >
                   <Plus className="h-4 w-4" />
-                  New
+                  <span className="hidden sm:inline">New</span>
                 </Button>
               )}
             </div>
@@ -159,9 +163,12 @@ export default function ChatPage() {
                     return (
                       <button
                         key={conv.id}
-                        onClick={() => setSelectedConversation(conv.id)}
+                        onClick={() => {
+                          setSelectedConversation(conv.id);
+                          setShowConversations(false);
+                        }}
                         className={cn(
-                          'w-full p-4 text-left hover:bg-gray-50 transition-colors',
+                          'w-full p-3 md:p-4 text-left hover:bg-gray-50 transition-colors',
                           isSelected && 'bg-blue-50'
                         )}
                       >
@@ -220,24 +227,35 @@ export default function ChatPage() {
         </Card>
 
         {/* Messages Panel */}
-        <Card className="md:col-span-2 flex flex-col">
+        <Card className={cn(
+          "md:col-span-2 flex flex-col",
+          !selectedConversation || showConversations ? "hidden md:flex" : "flex"
+        )}>
           {selectedConversation ? (
             <>
               {/* Chat Header */}
-              <CardHeader className="pb-3 border-b">
+              <CardHeader className="pb-3 border-b p-3 md:p-6 md:pb-3">
                 {(() => {
                   const conv = conversations?.find(c => c.id === selectedConversation);
                   const other = conv ? getOtherParticipant(conv) : null;
                   return (
                     <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback className="bg-blue-100 text-blue-600">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="md:hidden -ml-2"
+                        onClick={() => setShowConversations(true)}
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                      </Button>
+                      <Avatar className="h-8 w-8 md:h-10 md:w-10">
+                        <AvatarFallback className="bg-blue-100 text-blue-600 text-sm md:text-base">
                           {other?.profile.firstName?.charAt(0)}
                           {other?.profile.lastName?.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="font-medium">
+                        <p className="font-medium text-sm md:text-base">
                           {other?.profile.firstName} {other?.profile.lastName}
                         </p>
                         <p className="text-xs text-gray-500 capitalize">
@@ -250,12 +268,12 @@ export default function ChatPage() {
               </CardHeader>
 
               {/* Messages Area */}
-              <CardContent className="flex-1 p-4 overflow-hidden">
-                <ScrollArea className="h-full pr-4">
+              <CardContent className="flex-1 p-3 md:p-4 overflow-hidden">
+                <ScrollArea className="h-full pr-2 md:pr-4">
                   {messagesLoading ? (
                     <div className="text-center py-8 text-gray-500">Loading messages...</div>
                   ) : messages && messages.length > 0 ? (
-                    <div className="space-y-4">
+                    <div className="space-y-3 md:space-y-4">
                       {messages.map((message) => {
                         const isOwnMessage = message.senderId === user?.id;
                         return (
@@ -268,7 +286,7 @@ export default function ChatPage() {
                           >
                             <div
                               className={cn(
-                                'max-w-[70%] rounded-lg px-4 py-2',
+                                'max-w-[85%] md:max-w-[70%] rounded-lg px-3 py-2 md:px-4',
                                 isOwnMessage
                                   ? 'bg-blue-500 text-white'
                                   : 'bg-gray-100 text-gray-900'
@@ -299,7 +317,7 @@ export default function ChatPage() {
               </CardContent>
 
               {/* Message Input */}
-              <div className="p-4 border-t">
+              <div className="p-3 md:p-4 border-t">
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
@@ -311,11 +329,13 @@ export default function ChatPage() {
                     value={messageInput}
                     onChange={(e) => setMessageInput(e.target.value)}
                     placeholder="Type your message..."
-                    className="flex-1"
+                    className="flex-1 text-sm md:text-base"
                   />
                   <Button
                     type="submit"
                     disabled={!messageInput.trim() || sendMessageMutation.isPending}
+                    size="sm"
+                    className="md:size-default"
                   >
                     <Send className="h-4 w-4" />
                   </Button>
@@ -324,10 +344,10 @@ export default function ChatPage() {
             </>
           ) : (
             <div className="flex-1 flex items-center justify-center text-gray-500">
-              <div className="text-center">
-                <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p className="font-medium">Select a conversation</p>
-                <p className="text-sm mt-1">Choose a conversation from the list to start chatting</p>
+              <div className="text-center px-4">
+                <MessageSquare className="h-10 w-10 md:h-12 md:w-12 mx-auto mb-4 opacity-50" />
+                <p className="font-medium text-sm md:text-base">Select a conversation</p>
+                <p className="text-xs md:text-sm mt-1">Choose a conversation from the list to start chatting</p>
               </div>
             </div>
           )}

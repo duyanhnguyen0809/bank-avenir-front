@@ -54,15 +54,15 @@ export default function LoansPage() {
   const pendingLoans = loans?.filter(l => l.status === 'PENDING').length || 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Loans</h1>
-          <p className="text-gray-500">Manage your loans and apply for new ones</p>
+          <h1 className="text-2xl md:text-3xl font-bold">Loans</h1>
+          <p className="text-sm md:text-base text-gray-500">Manage your loans and apply for new ones</p>
         </div>
         <Link href="/loans/apply">
-          <Button className="gap-2">
+          <Button className="gap-2 w-full sm:w-auto">
             <Plus className="h-4 w-4" />
             Apply for Loan
           </Button>
@@ -70,47 +70,47 @@ export default function LoansPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="p-3 md:pt-6 md:p-6">
             <div className="flex items-center gap-2 mb-2">
-              <DollarSign className="h-5 w-5 text-gray-400" />
-              <span className="text-sm text-gray-500">Total Debt</span>
+              <DollarSign className="h-4 w-4 md:h-5 md:w-5 text-gray-400" />
+              <span className="text-xs md:text-sm text-gray-500">Total Debt</span>
             </div>
-            <div className="text-2xl font-bold">{formatCurrency(totalDebt, 'EUR')}</div>
+            <div className="text-lg md:text-2xl font-bold">{formatCurrency(totalDebt, 'EUR')}</div>
             <p className="text-xs text-gray-500">{activeLoans.length} active loan(s)</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="p-3 md:pt-6 md:p-6">
             <div className="flex items-center gap-2 mb-2">
-              <Clock className="h-5 w-5 text-gray-400" />
-              <span className="text-sm text-gray-500">Monthly Payments</span>
+              <Clock className="h-4 w-4 md:h-5 md:w-5 text-gray-400" />
+              <span className="text-xs md:text-sm text-gray-500">Monthly</span>
             </div>
-            <div className="text-2xl font-bold">{formatCurrency(monthlyPayments, 'EUR')}</div>
+            <div className="text-lg md:text-2xl font-bold">{formatCurrency(monthlyPayments, 'EUR')}</div>
             <p className="text-xs text-gray-500">Due monthly</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="p-3 md:pt-6 md:p-6">
             <div className="flex items-center gap-2 mb-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
-              <span className="text-sm text-gray-500">Active Loans</span>
+              <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-green-500" />
+              <span className="text-xs md:text-sm text-gray-500">Active</span>
             </div>
-            <div className="text-2xl font-bold">{activeLoans.length}</div>
+            <div className="text-lg md:text-2xl font-bold">{activeLoans.length}</div>
             <p className="text-xs text-gray-500">In progress</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="p-3 md:pt-6 md:p-6">
             <div className="flex items-center gap-2 mb-2">
-              <AlertCircle className="h-5 w-5 text-yellow-500" />
-              <span className="text-sm text-gray-500">Pending Applications</span>
+              <AlertCircle className="h-4 w-4 md:h-5 md:w-5 text-yellow-500" />
+              <span className="text-xs md:text-sm text-gray-500">Pending</span>
             </div>
-            <div className="text-2xl font-bold">{pendingLoans}</div>
+            <div className="text-lg md:text-2xl font-bold">{pendingLoans}</div>
             <p className="text-xs text-gray-500">Awaiting approval</p>
           </CardContent>
         </Card>
@@ -118,60 +118,62 @@ export default function LoansPage() {
 
       {/* Loans Table */}
       <Card>
-        <CardHeader>
-          <CardTitle>My Loans</CardTitle>
-          <CardDescription>View all your loan applications and active loans</CardDescription>
+        <CardHeader className="p-4 md:p-6">
+          <CardTitle className="text-lg md:text-xl">My Loans</CardTitle>
+          <CardDescription className="text-xs md:text-sm">View all your loan applications and active loans</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0 md:p-6 md:pt-0">
           {isLoading ? (
             <div className="text-center py-8 text-gray-500">Loading loans...</div>
           ) : loans && loans.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Loan ID</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead className="text-right">Interest Rate</TableHead>
-                  <TableHead className="text-right">Duration</TableHead>
-                  <TableHead className="text-right">Monthly Payment</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Created</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loans.map((loan) => (
-                  <TableRow key={loan.id}>
-                    <TableCell className="font-mono text-xs">
-                      {loan.id.slice(0, 8)}...
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatCurrency(loan.amount, 'EUR')}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {(loan.interestRate * 100).toFixed(2)}%
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {loan.durationMonths} months
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatCurrency(loan.monthlyPayment, 'EUR')}
-                    </TableCell>
-                    <TableCell>{getStatusBadge(loan.status)}</TableCell>
-                    <TableCell className="text-right text-gray-500">
-                      {new Date(loan.createdAt).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Link href={`/loans/${loan.id}`}>
-                        <Button variant="ghost" size="sm">
-                          View
-                        </Button>
-                      </Link>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="whitespace-nowrap">Loan ID</TableHead>
+                    <TableHead className="text-right whitespace-nowrap">Amount</TableHead>
+                    <TableHead className="text-right whitespace-nowrap hidden md:table-cell">Interest Rate</TableHead>
+                    <TableHead className="text-right whitespace-nowrap hidden md:table-cell">Duration</TableHead>
+                    <TableHead className="text-right whitespace-nowrap hidden sm:table-cell">Monthly</TableHead>
+                    <TableHead className="whitespace-nowrap">Status</TableHead>
+                    <TableHead className="text-right whitespace-nowrap hidden lg:table-cell">Created</TableHead>
+                    <TableHead></TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {loans.map((loan) => (
+                    <TableRow key={loan.id}>
+                      <TableCell className="font-mono text-xs">
+                        {loan.id.slice(0, 8)}...
+                      </TableCell>
+                      <TableCell className="text-right font-medium whitespace-nowrap">
+                        {formatCurrency(loan.amount, 'EUR')}
+                      </TableCell>
+                      <TableCell className="text-right hidden md:table-cell">
+                        {(loan.interestRate * 100).toFixed(2)}%
+                      </TableCell>
+                      <TableCell className="text-right hidden md:table-cell">
+                        {loan.durationMonths} months
+                      </TableCell>
+                      <TableCell className="text-right hidden sm:table-cell whitespace-nowrap">
+                        {formatCurrency(loan.monthlyPayment, 'EUR')}
+                      </TableCell>
+                      <TableCell>{getStatusBadge(loan.status)}</TableCell>
+                      <TableCell className="text-right text-gray-500 hidden lg:table-cell">
+                        {new Date(loan.createdAt).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Link href={`/loans/${loan.id}`}>
+                          <Button variant="ghost" size="sm">
+                            View
+                          </Button>
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           ) : (
             <div className="text-center py-12 text-gray-500">
               <DollarSign className="h-12 w-12 mx-auto mb-4 opacity-50" />

@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, User } from 'lucide-react';
+import { Bell, User, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -15,7 +15,11 @@ import { useAuthStore } from '@/lib/store/authStore';
 import { useNotificationStore } from '@/lib/store/notificationStore';
 import { useRouter } from 'next/navigation';
 
-export function Navbar() {
+interface NavbarProps {
+  onMenuClick?: () => void;
+}
+
+export function Navbar({ onMenuClick }: NavbarProps) {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { unreadCount } = useNotificationStore();
@@ -26,13 +30,25 @@ export function Navbar() {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6 sticky top-0 z-10">
-      <div>
-        <h1 className="text-xl font-bold text-blue-600">Bank Avenir</h1>
-        <p className="text-xs text-gray-500">Your Digital Banking Partner</p>
+    <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-4 md:px-6 sticky top-0 z-10">
+      <div className="flex items-center gap-3">
+        {/* Mobile menu button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden"
+          onClick={onMenuClick}
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+        
+        <div>
+          <h1 className="text-lg md:text-xl font-bold text-blue-600">Bank Avenir</h1>
+          <p className="text-xs text-gray-500 hidden sm:block">Your Digital Banking Partner</p>
+        </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 md:gap-4">
         {/* Notifications */}
         <Button
           variant="ghost"

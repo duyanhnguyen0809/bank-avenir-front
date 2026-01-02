@@ -79,11 +79,11 @@ export default function NotificationsPage() {
       <div
         key={notification.id}
         className={cn(
-          'p-4 rounded-lg border transition-colors',
+          'p-3 md:p-4 rounded-lg border transition-colors',
           isUnread ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-200'
         )}
       >
-        <div className="flex items-start gap-4">
+        <div className="flex items-start gap-3 md:gap-4">
           <div className="flex-shrink-0 mt-1">
             {getNotificationIcon(notification.type)}
           </div>
@@ -91,12 +91,12 @@ export default function NotificationsPage() {
             <div className="flex items-start justify-between gap-2">
               <div>
                 <p className={cn(
-                  'font-medium',
+                  'font-medium text-sm md:text-base',
                   isUnread ? 'text-gray-900' : 'text-gray-700'
                 )}>
                   {notification.title}
                 </p>
-                <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
+                <p className="text-xs md:text-sm text-gray-600 mt-1">{notification.message}</p>
               </div>
               {isUnread && (
                 <Badge className="bg-blue-500 text-white flex-shrink-0">New</Badge>
@@ -126,12 +126,12 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Notifications</h1>
-          <p className="text-gray-500">
+          <h1 className="text-2xl md:text-3xl font-bold">Notifications</h1>
+          <p className="text-sm md:text-base text-gray-500">
             {unreadNotifications.length > 0
               ? `You have ${unreadNotifications.length} unread notification${unreadNotifications.length > 1 ? 's' : ''}`
               : 'All caught up!'}
@@ -142,7 +142,7 @@ export default function NotificationsPage() {
             variant="outline"
             onClick={() => markAllAsReadMutation.mutate()}
             disabled={markAllAsReadMutation.isPending}
-            className="gap-2"
+            className="gap-2 w-full sm:w-auto"
           >
             <CheckCheck className="h-4 w-4" />
             Mark all as read
@@ -152,12 +152,12 @@ export default function NotificationsPage() {
 
       {/* Notifications */}
       <Tabs defaultValue="all" className="w-full">
-        <TabsList>
-          <TabsTrigger value="all" className="gap-2">
+        <TabsList className="w-full sm:w-auto">
+          <TabsTrigger value="all" className="gap-2 flex-1 sm:flex-none">
             All
             <Badge variant="secondary">{allNotifications.length}</Badge>
           </TabsTrigger>
-          <TabsTrigger value="unread" className="gap-2">
+          <TabsTrigger value="unread" className="gap-2 flex-1 sm:flex-none">
             Unread
             {unreadNotifications.length > 0 && (
               <Badge className="bg-blue-500 text-white">{unreadNotifications.length}</Badge>
