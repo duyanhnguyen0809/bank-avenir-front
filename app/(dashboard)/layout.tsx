@@ -4,7 +4,8 @@ import { useState } from "react";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { Navbar } from "@/components/layout/Navbar";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 export default function DashboardLayout({
   children,
@@ -23,7 +24,10 @@ export default function DashboardLayout({
 
         {/* Mobile Sidebar */}
         <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-          <SheetContent side="left" className="p-0 w-72">
+          <SheetContent side="left" className="p-0 w-72" hideCloseButton>
+            <VisuallyHidden>
+              <SheetTitle>Navigation Menu</SheetTitle>
+            </VisuallyHidden>
             <Sidebar isMobile onClose={() => setSidebarOpen(false)} />
           </SheetContent>
         </Sheet>
