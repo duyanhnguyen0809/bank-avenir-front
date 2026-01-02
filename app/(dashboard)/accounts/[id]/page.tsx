@@ -1,5 +1,6 @@
 'use client';
 
+import { use, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { accountsApi } from '@/lib/api/accounts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,21 +11,25 @@ import { Separator } from '@/components/ui/separator';
 import { ArrowLeft, CreditCard, TrendingUp, ArrowUpCircle, ArrowDownCircle, Copy, Check } from 'lucide-react';
 import Link from 'next/link';
 import { formatCurrency, formatDateTime } from '@/lib/utils';
-import { useState } from 'react';
 import { toast } from 'sonner';
 
-export default function AccountDetailsPage({ params }: { params: { id: string } }) {
+interface AccountDetailsPageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default function AccountDetailsPage({ params }: AccountDetailsPageProps) {
+  const { id } = use(params);
   const [copied, setCopied] = useState(false);
 
   const { data: account, isLoading: accountLoading } = useQuery({
-    queryKey: ['account', params.id],
-    queryFn: () => accountsApi.getAccount(params.id),
+    queryKey: ['account', id],
+    queryFn: () => accountsApi.getAccount(id),
   });
 
   const { data: operations, isLoading: operationsLoading } = useQuery({
-    queryKey: ['operations', params.id],
-    queryFn: () => accountsApi.getAccountOperations(params.id),
-    enabled: !!params.id,
+    queryKey: ['operations', id],
+    queryFn: () => accountsApi.getAccountOperations(id),
+    enabled: !!id,
   });
 
   const copyIban = () => {
