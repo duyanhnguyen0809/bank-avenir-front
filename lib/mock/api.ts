@@ -503,6 +503,130 @@ export const mockNotificationsApi = {
   },
 };
 
+// ============ CHAT API ============
+import { mockConversations, mockMessages } from './data';
+import { Conversation, Message } from '@/lib/types';
+
+let conversations: Conversation[] = [...mockConversations];
+let messages: Message[] = [...mockMessages];
+
+export const mockChatApi = {
+  async getConversations(userId: string): Promise<Conversation[]> {
+    await delay(300);
+    return conversations
+      .filter(c => c.participants.some(p => p.id === userId))
+      .sort((a, b) => new Date(b.lastMessage?.createdAt || b.createdAt).getTime() - 
+                       new Date(a.lastMessage?.createdAt || a.createdAt).getTime());
+  },
+
+  async getConversation(conversationId: string): Promise<Conversation | undefined> {
+    await delay(200);
+    return conversations.find(c => c.id === conversationId);
+  },
+
+  async getMessages(conversationId: string): Promise<Message[]> {
+    await delay(300);
+    return messages
+      .filter(m => m.conversationId === conversationId)
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  },
+
+  async sendMessage(data: {
+    conversationId: string;
+    senderId: string;
+    receiverId: string;
+    content: string;
+  }): Promise<Message> {
+    await delay(400);
+    
+    const newMessage: Message = {
+      id: `msg-${generateId()}`,
+      conversationId: data.conversationId,
+      senderId: data.senderId,
+      receiverId: data.receiverId,
+      content: data.content,
+      isRead: false,
+      createdAt: new Date().toISOString(),
+    };
+    
+    messages.push(newMessage);
+    
+    // Update conversation's last message
+    const conv = conversations.find(c => c.id === data.conversationId);
+    if (conv) {
+      conv.lastMessage = newMessage;
+      conv.unreadCount = (conv.unreadCount || 0) + 1;
+    }
+    
+    return newMessage;
+  },
+
+  async createConversation(data: {
+    userId: string;
+    recipientId: string;
+    initialMessage?: string;
+  }): Promise<Conversation> {
+    await delay(400);
+    
+    // Check if conversation exists
+    const existing = conversations.find(c => 
+      c.participants.some(p => p.id === data.userId) && 
+      c.participants.some(p => p.id === data.recipientId)
+    );
+    
+    if (existing) return existing;
+    
+    const user = users.find(u => u.id === data.userId);
+    const recipient = users.find(u => u.id === data.recipientId);
+    
+    if (!user || !recipient) throw new Error('User not found');
+    
+    const newConv: Conversation = {
+      id: `conv-${generateId()}`,
+      participants: [user, recipient],
+      unreadCount: 0,
+      createdAt: new Date().toISOString(),
+    };
+    
+    conversations.push(newConv);
+    
+    // Send initial message if provided
+    if (data.initialMessage) {
+      const msg = await mockChatApi.sendMessage({
+        conversationId: newConv.id,
+        senderId: data.userId,
+        receiverId: data.recipientId,
+        content: data.initialMessage,
+      });
+      newConv.lastMessage = msg;
+    }
+    
+    return newConv;
+  },
+
+  async markConversationRead(conversationId: string, userId: string): Promise<void> {
+    await delay(200);
+    
+    // Mark messages as read
+    messages.forEach(m => {
+      if (m.conversationId === conversationId && m.receiverId === userId) {
+        m.isRead = true;
+      }
+    });
+    
+    // Reset unread count
+    const conv = conversations.find(c => c.id === conversationId);
+    if (conv) {
+      conv.unreadCount = 0;
+    }
+  },
+
+  async getAdvisors(): Promise<User[]> {
+    await delay(300);
+    return users.filter(u => u.role === 'ADMIN' || u.role === 'MANAGER');
+  },
+};
+
 // Export all mock APIs
 export const mockApi = {
   auth: mockAuthApi,
@@ -511,4 +635,5 @@ export const mockApi = {
   orders: mockOrdersApi,
   loans: mockLoansApi,
   notifications: mockNotificationsApi,
+  chat: mockChatApi,
 };

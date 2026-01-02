@@ -496,3 +496,71 @@ export const mockOrderBook = {
     { price: 178.75, quantity: 600 },
   ],
 };
+
+// Mock Conversations and Messages
+export const mockConversations = [
+  {
+    id: 'conv-1',
+    participants: [mockUsers[0], mockUsers[1]],
+    lastMessage: {
+      id: 'msg-5',
+      conversationId: 'conv-1',
+      senderId: '2',
+      receiverId: '1',
+      content: 'Your loan application has been processed. Let us know if you have any questions!',
+      isRead: false,
+      createdAt: '2025-01-15T10:30:00Z',
+    },
+    unreadCount: 1,
+    createdAt: '2025-01-10T09:00:00Z',
+  },
+];
+
+export const mockMessages = [
+  {
+    id: 'msg-1',
+    conversationId: 'conv-1',
+    senderId: '1',
+    receiverId: '2',
+    content: 'Hello, I have a question about my loan application.',
+    isRead: true,
+    createdAt: '2025-01-10T09:00:00Z',
+  },
+  {
+    id: 'msg-2',
+    conversationId: 'conv-1',
+    senderId: '2',
+    receiverId: '1',
+    content: 'Of course! How can I help you with your loan application?',
+    isRead: true,
+    createdAt: '2025-01-10T09:05:00Z',
+  },
+  {
+    id: 'msg-3',
+    conversationId: 'conv-1',
+    senderId: '1',
+    receiverId: '2',
+    content: 'I wanted to know the status and when I can expect a decision.',
+    isRead: true,
+    createdAt: '2025-01-10T09:10:00Z',
+  },
+  {
+    id: 'msg-4',
+    conversationId: 'conv-1',
+    senderId: '2',
+    receiverId: '1',
+    content: 'Let me check on that for you. It usually takes 2-3 business days for review.',
+    isRead: true,
+    createdAt: '2025-01-10T09:15:00Z',
+  },
+  {
+    id: 'msg-5',
+    conversationId: 'conv-1',
+    senderId: '2',
+    receiverId: '1',
+    content: 'Your loan application has been processed. Let us know if you have any questions!',
+    isRead: false,
+    createdAt: '2025-01-15T10:30:00Z',
+  },
+];
+
