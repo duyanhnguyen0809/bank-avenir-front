@@ -158,7 +158,21 @@ export interface Notification {
   message: string;
   type: string;
   isRead: boolean;
+  read?: boolean; // Alias for compatibility
   createdAt: string;
+}
+
+// Transaction types (for account operations display)
+export interface Transaction {
+  id: string;
+  accountId: string;
+  type: 'DEPOSIT' | 'WITHDRAWAL' | 'TRANSFER' | 'PAYMENT';
+  amount: number;
+  currency: string;
+  description?: string;
+  date: string;
+  status: 'PENDING' | 'COMPLETED' | 'FAILED';
+  reference?: string;
 }
 
 // Admin types
