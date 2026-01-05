@@ -114,6 +114,9 @@ export interface Loan {
   createdAt: string;
   approvalDate?: string;
   disbursementDate?: string;
+  // Populated from user when fetching pending loans
+  applicantName?: string;
+  applicantEmail?: string;
 }
 
 export interface LoanSchedule {

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, CreditCard, TrendingUp, DollarSign, MessageSquare, Settings, Bell, X } from 'lucide-react';
+import { Home, CreditCard, TrendingUp, DollarSign, MessageSquare, Settings, Bell, X, UserCog } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/lib/store/authStore';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ const navigation = [
   { name: 'Loans', href: '/loans', icon: DollarSign, roles: ['CLIENT', 'MANAGER', 'ADMIN'] },
   { name: 'Chat', href: '/chat', icon: MessageSquare, roles: ['CLIENT', 'MANAGER', 'ADMIN'] },
   { name: 'Notifications', href: '/notifications', icon: Bell, roles: ['CLIENT', 'MANAGER', 'ADMIN'] },
+  { name: 'Conseiller', href: '/conseiller', icon: UserCog, roles: ['MANAGER', 'ADMIN'] },
   { name: 'Admin', href: '/admin', icon: Settings, roles: ['ADMIN'] },
 ];
 
