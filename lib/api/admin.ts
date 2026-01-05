@@ -181,4 +181,41 @@ export const adminApi = {
     const response = await api.post(`/admin/loans/${loanId}/reject`);
     return response.data;
   },
+
+  updateUserRole: async (userId: string, role: 'CLIENT' | 'MANAGER' | 'ADMIN'): Promise<User> => {
+    if (USE_MOCK_API) {
+      return mockAdminApi.updateUserStatus(userId, 'ACTIVE'); // Mock fallback
+    }
+    const response = await api.put(`/admin/users/${userId}/role`, { role });
+    return response.data;
+  },
+
+  createSavingsRate: async (data: {
+    accountType: 'CHECKING' | 'SAVINGS' | 'INVESTMENT';
+    rate: number;
+    minBalance: number;
+    effectiveDate: string;
+  }): Promise<void> => {
+    if (USE_MOCK_API) {
+      return; // No-op for mock
+    }
+    await api.post('/admin/savings-rate', data);
+  },
+
+  getSavingsRates: async (): Promise<Array<{
+    id: string;
+    accountType: string;
+    rate: number;
+    minBalance: number;
+    effectiveDate: string;
+  }>> => {
+    if (USE_MOCK_API) {
+      return [
+        { id: '1', accountType: 'SAVINGS', rate: 0.025, minBalance: 1000, effectiveDate: '2026-01-01' },
+        { id: '2', accountType: 'CHECKING', rate: 0.005, minBalance: 0, effectiveDate: '2026-01-01' },
+      ];
+    }
+    const response = await api.get('/admin/savings-rates');
+    return response.data;
+  },
 };
