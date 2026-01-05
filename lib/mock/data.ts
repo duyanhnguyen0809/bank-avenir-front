@@ -32,6 +32,20 @@ export const mockUsers: User[] = [
       dateOfBirth: '1985-03-20',
     },
   },
+  {
+    id: '3',
+    email: 'conseiller@bankavenir.com',
+    role: 'MANAGER',
+    status: 'ACTIVE',
+    emailConfirmed: true,
+    profile: {
+      firstName: 'Marie',
+      lastName: 'Dupont',
+      phone: '+33 6 55 44 33 22',
+      address: '789 Advisor Street, Paris',
+      dateOfBirth: '1988-07-10',
+    },
+  },
 ];
 
 // Mock Bank Accounts

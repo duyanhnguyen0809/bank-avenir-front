@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/lib/store/authStore';
 import { chatApi } from '@/lib/api/chat';
-import { loansApi } from '@/lib/api/loans';
+import { adminApi } from '@/lib/api/admin';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,11 +33,22 @@ import {
   Clock,
   ArrowLeft,
   Users,
+  Bell,
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { Conversation, Message, Loan } from '@/lib/types';
 import { toast } from 'sonner';
 import { redirect } from 'next/navigation';
+import { mockChatWebSocketService } from '@/lib/services/mockChatWebSocket';
+
+interface HelpRequest {
+  clientId: string;
+  clientName: string;
+  clientEmail: string;
+  message: string;
+  timestamp: string;
+  conversationId: string;
+}
 
 export default function ConseillerPage() {
   const { user } = useAuthStore();
@@ -45,12 +56,60 @@ export default function ConseillerPage() {
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [messageInput, setMessageInput] = useState('');
   const [showConversations, setShowConversations] = useState(true);
+  const [helpRequests, setHelpRequests] = useState<HelpRequest[]>([]);
+  const [newMessages, setNewMessages] = useState<Message[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Redirect non-manager/admin users
   if (user && user.role === 'CLIENT') {
     redirect('/dashboard');
   }
+
+  // Connect to mock WebSocket on mount
+  useEffect(() => {
+    if (user && (user.role === 'MANAGER' || user.role === 'ADMIN')) {
+      const userName = user.profile?.firstName 
+        ? `${user.profile.firstName} ${user.profile.lastName || ''}`
+        : user.email.split('@')[0];
+      
+      mockChatWebSocketService.connect(user.id, user.role, userName, user.email);
+
+      // Listen for new messages
+      const unsubMessage = mockChatWebSocketService.onMessage((message) => {
+        console.log('📨 New message received:', message);
+        setNewMessages(prev => [...prev, message]);
+        queryClient.invalidateQueries({ queryKey: ['messages'] });
+        queryClient.invalidateQueries({ queryKey: ['advisorConversations'] });
+        toast.info(`New message from client`, {
+          description: message.content.substring(0, 50),
+        });
+      });
+
+      // Listen for help requests
+      const unsubHelp = mockChatWebSocketService.onHelpRequest((request) => {
+        console.log('🆘 Help request received:', request);
+        setHelpRequests(prev => {
+          // Avoid duplicates
+          if (prev.some(r => r.conversationId === request.conversationId)) {
+            return prev;
+          }
+          return [...prev, request];
+        });
+        toast.info(`Help request from ${request.clientName}`, {
+          description: request.message.substring(0, 50),
+        });
+      });
+
+      // Load existing pending help requests
+      setHelpRequests(mockChatWebSocketService.getPendingHelpRequests());
+
+      return () => {
+        unsubMessage();
+        unsubHelp();
+        mockChatWebSocketService.disconnect();
+      };
+    }
+  }, [user, queryClient]);
 
   // Fetch all conversations (as advisor, we see all client conversations)
   const { data: conversations, isLoading: conversationsLoading } = useQuery({
@@ -68,60 +127,11 @@ export default function ConseillerPage() {
     refetchInterval: 3000,
   });
 
-  // Fetch pending loans for approval
+  // Fetch pending loans from admin API
   const { data: pendingLoans, isLoading: loansLoading } = useQuery({
     queryKey: ['pendingLoansAdvisor'],
-    queryFn: async () => {
-      // Get all loans and filter pending ones
-      // In real implementation, there would be an API for this
-      const allLoans: Loan[] = [];
-      // Mock pending loans for advisor view
-      return [
-        {
-          id: 'loan-pending-1',
-          userId: 'user-1',
-          accountId: 'acc-1',
-          amount: 25000,
-          interestRate: 0.055,
-          insuranceRate: 0.005,
-          durationMonths: 36,
-          monthlyPayment: 752.50,
-          status: 'PENDING' as const,
-          createdAt: '2026-01-03T10:00:00Z',
-          applicantName: 'Jean Dupont',
-          applicantEmail: 'jean.dupont@email.com',
-        },
-        {
-          id: 'loan-pending-2',
-          userId: 'user-2',
-          accountId: 'acc-2',
-          amount: 150000,
-          interestRate: 0.035,
-          insuranceRate: 0.003,
-          durationMonths: 240,
-          monthlyPayment: 870.25,
-          status: 'PENDING' as const,
-          createdAt: '2026-01-04T14:30:00Z',
-          applicantName: 'Marie Martin',
-          applicantEmail: 'marie.martin@email.com',
-        },
-        {
-          id: 'loan-pending-3',
-          userId: 'user-3',
-          accountId: 'acc-3',
-          amount: 15000,
-          interestRate: 0.065,
-          insuranceRate: 0.004,
-          durationMonths: 24,
-          monthlyPayment: 685.75,
-          status: 'PENDING' as const,
-          createdAt: '2026-01-05T09:15:00Z',
-          applicantName: 'Pierre Durand',
-          applicantEmail: 'pierre.durand@email.com',
-        },
-      ] as (Loan & { applicantName: string; applicantEmail: string })[];
-    },
-    refetchInterval: 30000,
+    queryFn: () => adminApi.getPendingLoans(),
+    refetchInterval: 10000,
   });
 
   // Send message mutation
@@ -135,33 +145,47 @@ export default function ConseillerPage() {
     },
   });
 
-  // Approve loan mutation
+  // Approve loan mutation - uses admin API with notifications
   const approveLoanMutation = useMutation({
-    mutationFn: (loanId: string) => {
-      // Mock approval - in real app, use adminApi.approveLoan
-      return Promise.resolve({ id: loanId, status: 'APPROVED' });
-    },
-    onSuccess: () => {
+    mutationFn: (loanId: string) => adminApi.approveLoan(loanId),
+    onSuccess: (loan) => {
       queryClient.invalidateQueries({ queryKey: ['pendingLoansAdvisor'] });
-      toast.success('Prêt approuvé avec succès');
+      toast.success('Loan approved successfully!', {
+        description: `The client has been notified of the approval.`,
+      });
+      console.log('✅ Loan approved, notification sent to client:', loan.userId);
     },
     onError: () => {
-      toast.error('Erreur lors de l\'approbation du prêt');
+      toast.error('Error approving loan');
     },
   });
 
-  // Reject loan mutation
+  // Reject loan mutation - uses admin API with notifications
   const rejectLoanMutation = useMutation({
-    mutationFn: (loanId: string) => {
-      // Mock rejection - in real app, use adminApi.rejectLoan
-      return Promise.resolve({ id: loanId, status: 'REJECTED' });
-    },
-    onSuccess: () => {
+    mutationFn: (loanId: string) => adminApi.rejectLoan(loanId),
+    onSuccess: (loan) => {
       queryClient.invalidateQueries({ queryKey: ['pendingLoansAdvisor'] });
-      toast.success('Prêt refusé');
+      toast.success('Loan rejected', {
+        description: `The client has been notified.`,
+      });
+      console.log('❌ Loan rejected, notification sent to client:', loan.userId);
     },
     onError: () => {
-      toast.error('Erreur lors du refus du prêt');
+      toast.error('Error rejecting loan');
+    },
+  });
+
+  // Accept help request mutation
+  const acceptHelpMutation = useMutation({
+    mutationFn: (conversationId: string) => mockChatWebSocketService.acceptHelp(conversationId),
+    onSuccess: (result, conversationId) => {
+      setHelpRequests(prev => prev.filter(r => r.conversationId !== conversationId));
+      toast.success('Help request accepted!', {
+        description: 'You can now chat with the client.',
+      });
+    },
+    onError: () => {
+      toast.error('Error accepting help request');
     },
   });
 

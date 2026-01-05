@@ -1,6 +1,61 @@
 import api from './client';
-import { DashboardStats, User, Loan } from '@/lib/types';
+import { DashboardStats, User, Loan, Notification } from '@/lib/types';
 import { USE_MOCK_API } from '@/lib/config';
+
+// Shared state for notifications (accessible for testing)
+let mockNotifications: Notification[] = [];
+let mockPendingLoans: Loan[] = [
+  {
+    id: 'loan-1',
+    userId: '1',
+    accountId: 'acc-1',
+    amount: 25000,
+    interestRate: 0.055,
+    insuranceRate: 0.005,
+    durationMonths: 36,
+    monthlyPayment: 752.50,
+    status: 'PENDING',
+    createdAt: '2025-01-10T10:00:00Z',
+    applicantName: 'John Doe',
+    applicantEmail: 'john@example.com',
+  },
+  {
+    id: 'loan-2',
+    userId: '4',
+    accountId: 'acc-2',
+    amount: 150000,
+    interestRate: 0.035,
+    insuranceRate: 0.003,
+    durationMonths: 240,
+    monthlyPayment: 870.25,
+    status: 'PENDING',
+    createdAt: '2025-01-12T14:30:00Z',
+    applicantName: 'Jane Smith',
+    applicantEmail: 'jane@example.com',
+  },
+  {
+    id: 'loan-3',
+    userId: '5',
+    accountId: 'acc-3',
+    amount: 50000,
+    interestRate: 0.045,
+    insuranceRate: 0.004,
+    durationMonths: 60,
+    monthlyPayment: 940.00,
+    status: 'PENDING',
+    createdAt: '2025-01-14T09:15:00Z',
+    applicantName: 'Bob Johnson',
+    applicantEmail: 'bob@example.com',
+  },
+];
+
+// Export for notification retrieval
+export const getMockNotificationsForUser = (userId: string) => {
+  return mockNotifications.filter(n => n.userId === userId);
+};
+
+// Generate random ID
+const generateId = () => Math.random().toString(36).substr(2, 9);
 
 // Mock admin API
 const mockAdminApi = {
@@ -62,50 +117,8 @@ const mockAdminApi = {
   },
 
   async getPendingLoans(): Promise<Loan[]> {
-    return [
-      {
-        id: 'loan-1',
-        userId: '1',
-        accountId: 'acc-1',
-        amount: 25000,
-        interestRate: 0.055,
-        insuranceRate: 0.005,
-        durationMonths: 36,
-        monthlyPayment: 752.50,
-        status: 'PENDING',
-        createdAt: '2025-01-10T10:00:00Z',
-        applicantName: 'John Doe',
-        applicantEmail: 'john@example.com',
-      },
-      {
-        id: 'loan-2',
-        userId: '2',
-        accountId: 'acc-2',
-        amount: 150000,
-        interestRate: 0.035,
-        insuranceRate: 0.003,
-        durationMonths: 240,
-        monthlyPayment: 870.25,
-        status: 'PENDING',
-        createdAt: '2025-01-12T14:30:00Z',
-        applicantName: 'Jane Smith',
-        applicantEmail: 'jane@example.com',
-      },
-      {
-        id: 'loan-3',
-        userId: '3',
-        accountId: 'acc-3',
-        amount: 50000,
-        interestRate: 0.045,
-        insuranceRate: 0.004,
-        durationMonths: 60,
-        monthlyPayment: 940.00,
-        status: 'PENDING',
-        createdAt: '2025-01-14T09:15:00Z',
-        applicantName: 'Bob Johnson',
-        applicantEmail: 'bob@example.com',
-      },
-    ];
+    // Return only pending loans from the shared state
+    return mockPendingLoans.filter(l => l.status === 'PENDING');
   },
 
   async updateUserStatus(userId: string, status: 'ACTIVE' | 'SUSPENDED' | 'CLOSED'): Promise<User> {
@@ -120,34 +133,54 @@ const mockAdminApi = {
   },
 
   async approveLoan(loanId: string): Promise<Loan> {
-    return {
-      id: loanId,
-      userId: '1',
-      accountId: 'acc-1',
-      amount: 25000,
-      interestRate: 0.055,
-      insuranceRate: 0.005,
-      durationMonths: 36,
-      monthlyPayment: 752.50,
-      status: 'APPROVED',
-      createdAt: '2025-01-10T10:00:00Z',
-      approvalDate: new Date().toISOString(),
+    const loanIndex = mockPendingLoans.findIndex(l => l.id === loanId);
+    if (loanIndex === -1) throw new Error('Loan not found');
+    
+    const loan = mockPendingLoans[loanIndex];
+    loan.status = 'APPROVED';
+    loan.approvalDate = new Date().toISOString();
+    
+    // Create notification for the client
+    const notification: Notification = {
+      id: generateId(),
+      userId: loan.userId,
+      type: 'SUCCESS',
+      title: '🎉 Loan Approved!',
+      message: `Great news! Your loan application for €${loan.amount.toLocaleString()} has been approved. The funds will be disbursed to your account within 2-3 business days.`,
+      isRead: false,
+      read: false,
+      createdAt: new Date().toISOString(),
     };
+    mockNotifications.push(notification);
+    
+    console.log('📧 Notification sent to client:', notification);
+    
+    return loan;
   },
 
   async rejectLoan(loanId: string): Promise<Loan> {
-    return {
-      id: loanId,
-      userId: '1',
-      accountId: 'acc-1',
-      amount: 25000,
-      interestRate: 0.055,
-      insuranceRate: 0.005,
-      durationMonths: 36,
-      monthlyPayment: 752.50,
-      status: 'REJECTED',
-      createdAt: '2025-01-10T10:00:00Z',
+    const loanIndex = mockPendingLoans.findIndex(l => l.id === loanId);
+    if (loanIndex === -1) throw new Error('Loan not found');
+    
+    const loan = mockPendingLoans[loanIndex];
+    loan.status = 'REJECTED';
+    
+    // Create notification for the client
+    const notification: Notification = {
+      id: generateId(),
+      userId: loan.userId,
+      type: 'WARNING',
+      title: 'Loan Application Update',
+      message: `We regret to inform you that your loan application for €${loan.amount.toLocaleString()} has not been approved at this time. Please contact our support team for more information.`,
+      isRead: false,
+      read: false,
+      createdAt: new Date().toISOString(),
     };
+    mockNotifications.push(notification);
+    
+    console.log('📧 Notification sent to client:', notification);
+    
+    return loan;
   },
 };
 

@@ -10,9 +10,11 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { MessageSquare, Send, Plus, User as UserIcon, ArrowLeft } from 'lucide-react';
+import { MessageSquare, Send, Plus, User as UserIcon, ArrowLeft, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Conversation, Message } from '@/lib/types';
+import { mockChatWebSocketService } from '@/lib/services/mockChatWebSocket';
+import { toast } from 'sonner';
 
 export default function ChatPage() {
   const { user } = useAuthStore();
@@ -20,7 +22,42 @@ export default function ChatPage() {
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [messageInput, setMessageInput] = useState('');
   const [showConversations, setShowConversations] = useState(true);
+  const [helpRequestSent, setHelpRequestSent] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Connect to mock WebSocket on mount
+  useEffect(() => {
+    if (user) {
+      const userName = user.profile?.firstName 
+        ? `${user.profile.firstName} ${user.profile.lastName || ''}`
+        : user.email.split('@')[0];
+      
+      mockChatWebSocketService.connect(user.id, user.role, userName, user.email);
+
+      // Listen for incoming messages
+      const unsubMessage = mockChatWebSocketService.onMessage((message) => {
+        console.log('📨 New message received:', message);
+        queryClient.invalidateQueries({ queryKey: ['messages'] });
+        queryClient.invalidateQueries({ queryKey: ['conversations'] });
+        toast.info('New message received!');
+      });
+
+      // Listen for help request accepted
+      const unsubHelp = mockChatWebSocketService.onHelpAccepted((data) => {
+        console.log('✅ Help request accepted by:', data.advisorName);
+        setHelpRequestSent(false);
+        toast.success(`An advisor (${data.advisorName}) has accepted your request!`);
+        // Refresh conversations to show new conversation
+        queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      });
+
+      return () => {
+        unsubMessage();
+        unsubHelp();
+        mockChatWebSocketService.disconnect();
+      };
+    }
+  }, [user, queryClient]);
 
   // Fetch conversations
   const { data: conversations, isLoading: conversationsLoading } = useQuery({
@@ -77,7 +114,7 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!messageInput.trim() || !selectedConversation || !user) return;
 
     const conversation = conversations?.find(c => c.id === selectedConversation);
@@ -86,12 +123,42 @@ export default function ChatPage() {
     const recipient = conversation.participants.find(p => p.id !== user.id);
     if (!recipient) return;
 
+    const content = messageInput.trim();
+    setMessageInput(''); // Clear immediately for better UX
+
+    // Send via mock WebSocket (for real-time delivery to conseiller)
+    try {
+      await mockChatWebSocketService.sendMessage(selectedConversation, recipient.id, content);
+      console.log('📤 Message sent via WebSocket');
+    } catch (err) {
+      console.warn('WebSocket send failed, falling back to API');
+    }
+
+    // Also save via API (for persistence)
     sendMessageMutation.mutate({
       conversationId: selectedConversation,
       senderId: user.id,
       receiverId: recipient.id,
-      content: messageInput.trim(),
+      content,
     });
+  };
+
+  const handleRequestHelp = async () => {
+    if (!user || helpRequestSent) return;
+
+    try {
+      const result = await mockChatWebSocketService.requestHelp(
+        'I need assistance with my account.'
+      );
+      if (result.success) {
+        setHelpRequestSent(true);
+        toast.success('Help request sent!', {
+          description: 'An advisor will respond shortly.',
+        });
+      }
+    } catch (err) {
+      toast.error('Failed to send help request');
+    }
   };
 
   const handleStartConversation = (advisorId: string) => {
@@ -126,7 +193,29 @@ export default function ChatPage() {
           <h1 className="text-2xl md:text-3xl font-bold">Messages</h1>
           <p className="text-sm md:text-base text-gray-500">Chat with your bank advisor</p>
         </div>
+        {/* Request Help Button for Clients */}
+        {user?.role === 'CLIENT' && (
+          <Button
+            onClick={handleRequestHelp}
+            disabled={helpRequestSent}
+            variant={helpRequestSent ? "outline" : "default"}
+            className="gap-2"
+          >
+            <HelpCircle className="h-4 w-4" />
+            {helpRequestSent ? 'Help Requested' : 'Request Help'}
+          </Button>
+        )}
       </div>
+
+      {/* Help Request Status */}
+      {helpRequestSent && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2">
+          <div className="animate-pulse h-2 w-2 rounded-full bg-blue-500" />
+          <span className="text-sm text-blue-700">
+            Waiting for an advisor to accept your help request...
+          </span>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 h-[calc(100%-80px)]">
         {/* Conversations List */}

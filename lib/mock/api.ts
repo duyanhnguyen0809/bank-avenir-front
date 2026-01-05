@@ -474,12 +474,18 @@ export const mockLoansApi = {
 };
 
 // ============ NOTIFICATIONS API ============
+// Import admin notifications getter
+import { getMockNotificationsForUser } from '@/lib/api/admin';
+
 export const mockNotificationsApi = {
   async getUserNotifications(userId: string): Promise<Notification[]> {
     await delay(300);
-    return notifications
+    // Combine regular notifications with admin-generated ones
+    const adminNotifications = getMockNotificationsForUser(userId);
+    const allNotifications = [...notifications, ...adminNotifications]
       .filter(n => n.userId === userId)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return allNotifications;
   },
 
   async markAsRead(notificationId: string): Promise<Notification> {
@@ -499,7 +505,10 @@ export const mockNotificationsApi = {
 
   async getUnreadCount(userId: string): Promise<number> {
     await delay(200);
-    return notifications.filter(n => n.userId === userId && !n.read).length;
+    // Include admin notifications in unread count
+    const adminNotifications = getMockNotificationsForUser(userId);
+    const allNotifications = [...notifications, ...adminNotifications];
+    return allNotifications.filter(n => n.userId === userId && !n.read && !n.isRead).length;
   },
 };
 
