@@ -1,12 +1,12 @@
-# 🏦 Bank Avenir - Frontend
+# Bank Avenir - Frontend
 
-A modern digital banking platform built with **Next.js 15**, **TypeScript**, and **shadcn/ui**.
+A modern digital banking platform built with **Next.js 16**, **TypeScript**, and **shadcn/ui**.
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Node.js 18+
-- Backend server running on `http://localhost:3000`
+- Backend server running on `http://localhost:4000`
 
 ### Installation
 
@@ -21,187 +21,123 @@ npm run dev
 Visit: **http://localhost:3000**
 
 ### Test Credentials
-- **Email**: client@bank-avenir.com
-- **Password**: Client123!
 
-## ✅ Phase 1: Complete
+| Role    | Email                | Password        |
+|---------|----------------------|-----------------|
+| Client  | client@avenir.com    | SecurePass123!  |
+| Manager | manager@avenir.com   | SecurePass123!  |
+| Admin   | admin@avenir.com     | SecurePass123!  |
 
-### Features Working:
-- ✅ **Authentication** (Login/Register/Email Confirmation)
-- ✅ **Protected Routes** with auth guards
-- ✅ **Dashboard Layout** (Navbar + Sidebar)
-- ✅ **Dashboard Home** with stats cards
-- ✅ **API Client** configured with JWT
-- ✅ **State Management** (Zustand)
-- ✅ **UI Components** (17 shadcn components)
+## Features
 
-## 📂 Project Structure
+### Client Features
+- **Dashboard** - Overview with account balances, recent transactions, and quick actions
+- **Accounts** - View accounts, check balances, open new accounts (Checking, Savings, Investment)
+- **Trading** - Browse securities, place buy/sell orders, view portfolio and order history
+- **Loans** - Apply for loans with payment calculator, track loan status and amortization
+- **Chat** - Real-time messaging with bank advisors via WebSocket
+- **Notifications** - Live notifications via Server-Sent Events (SSE)
+
+### Manager Features
+- **Client Management** - View assigned clients and their accounts
+- **Loan Processing** - Review, approve, or reject loan requests
+- **Chat Support** - Respond to client inquiries in real-time
+
+### Admin Features
+- **User Management** - View all users and change user roles
+- **Securities Management** - Create, update, and manage tradeable securities
+- **Interest Rates** - Configure savings rates by account type
+- **System Overview** - Monitor pending loan requests and system stats
+
+## Project Structure
 
 ```
 app/
 ├── (auth)/              # Public pages (login, register)
-├── (dashboard)/         # Protected pages (dashboard, accounts, etc.)
-└── page.tsx             # Root redirects to login
+├── (dashboard)/         # Protected pages
+│   ├── dashboard/       # Main dashboard
+│   ├── accounts/        # Account management
+│   ├── trading/         # Securities and orders
+│   ├── loans/           # Loan applications
+│   ├── chat/            # Client chat
+│   ├── advisor/         # Manager chat interface
+│   ├── conseiller/      # Legacy manager interface
+│   └── admin/           # Admin panel (users, rates, securities)
+├── backend/             # API proxy routes (handles CORS)
+└── page.tsx             # Root redirect
 
 components/
 ├── layout/              # Navbar, Sidebar, ProtectedRoute
-├── ui/                  # shadcn/ui components
-└── [features]/          # Feature-specific components (coming)
+└── ui/                  # shadcn/ui components
 
 lib/
 ├── api/                 # API service modules
-├── store/               # Zustand stores
-├── types/               # TypeScript types
-└── utils/               # Utility functions
+├── services/            # WebSocket and SSE services
+├── store/               # Zustand auth store
+├── types/               # TypeScript interfaces
+└── utils.ts             # Utility functions
 ```
 
-## 🎯 Next Steps
+## Tech Stack
 
-### Phase 2: Accounts Management (Next)
-- [ ] List accounts page
-- [ ] Account details page
-- [ ] Open account form
-- [ ] Transaction history
+| Category        | Technology                          |
+|-----------------|-------------------------------------|
+| Framework       | Next.js 16 (App Router)             |
+| Language        | TypeScript                          |
+| Styling         | Tailwind CSS 4                      |
+| UI Components   | shadcn/ui + Radix UI                |
+| State           | Zustand                             |
+| Server State    | TanStack Query (React Query)        |
+| Forms           | React Hook Form + Zod               |
+| HTTP Client     | Axios                               |
+| Real-time       | Socket.io-client (WebSocket), SSE   |
+| Charts          | Recharts                            |
+| Icons           | Lucide React                        |
 
-### Phase 3: Trading System
-- [ ] Securities list
-- [ ] Place orders (BUY/SELL)
-- [ ] Portfolio view
-- [ ] Order book
-
-### Phase 4: Loans
-- [ ] Loan application
-- [ ] Amortization schedule
-- [ ] Loan management
-
-### Phase 5: Real-Time
-- [ ] WebSocket chat
-- [ ] SSE notifications
-- [ ] Live updates
-
-### Phase 6: Admin Panel
-- [ ] User management
-- [ ] Securities management
-- [ ] System statistics
-
-## 📚 Documentation
-
-- **[QUICK-START.md](QUICK-START.md)** - Fast setup guide
-- **[DEVELOPMENT-STEPS.md](DEVELOPMENT-STEPS.md)** - Complete development guide
-- **[PHASE-1-COMPLETE.md](PHASE-1-COMPLETE.md)** - What's working now
-
-## 🛠️ Tech Stack
-
-- **Framework**: Next.js 15 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS 4
-- **UI Components**: shadcn/ui
-- **State Management**: Zustand
-- **Server State**: TanStack Query (React Query)
-- **Forms**: React Hook Form + Zod
-- **HTTP Client**: Axios
-- **Icons**: Lucide React
-- **Real-time**: Socket.io-client (ready)
-
-## 🔧 Available Scripts
-
-```bash
-npm run dev          # Start dev server
-npm run build        # Production build
-npm run start        # Production server
-npm run lint         # Run ESLint
-```
-
-## 🌐 Environment Variables
+## Environment Variables
 
 Create `.env.local`:
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:3000
-NEXT_PUBLIC_WS_URL=ws://localhost:3000
+NEXT_PUBLIC_API_URL=http://localhost:4000
 ```
 
-## 📦 Dependencies
+## Available Scripts
 
-### Core
-- axios, socket.io-client, zustand
-- @tanstack/react-query
-- react-hook-form, @hookform/resolvers, zod
-- date-fns, recharts, lucide-react
-
-### UI
-- shadcn/ui components
-- tailwindcss, class-variance-authority
-- clsx, tailwind-merge
-
-## 🎨 Features
-
-- **Modern UI**: Beautiful gradient designs
-- **Responsive**: Mobile-first approach
-- **Type-Safe**: Full TypeScript coverage
-- **Form Validation**: Zod schemas
-- **Error Handling**: User-friendly messages
-- **Loading States**: Disabled buttons during actions
-- **Protected Routes**: Automatic auth checks
-
-## 🐛 Troubleshooting
-
-### Backend Connection
-Make sure backend is running:
 ```bash
-curl http://localhost:3000/auth/login
+npm run dev      # Start development server
+npm run build    # Production build
+npm run start    # Production server
+npm run lint     # Run ESLint
 ```
 
-### Port Conflict
-Change frontend port if backend uses 3000:
-```bash
-# In package.json:
-"dev": "next dev -p 3001"
-```
+## API Architecture
 
-## 📞 Support
+The frontend uses a proxy pattern to avoid CORS issues:
+- Client requests go to `/backend/*`
+- Next.js API routes forward requests to the backend at `NEXT_PUBLIC_API_URL/api/*`
+- JWT tokens are automatically attached via Axios interceptors
 
-See documentation files for detailed guides and API references.
+## Role-Based Access
+
+| Route Pattern      | CLIENT | MANAGER | ADMIN |
+|--------------------|--------|---------|-------|
+| /dashboard         |   Y    |    Y    |   Y   |
+| /accounts          |   Y    |    Y    |   Y   |
+| /trading           |   Y    |    Y    |   Y   |
+| /loans             |   Y    |    Y    |   Y   |
+| /chat              |   Y    |    -    |   -   |
+| /advisor           |   -    |    Y    |   -   |
+| /admin/*           |   -    |    -    |   Y   |
+
+## Development Notes
+
+- **Authentication**: JWT stored in localStorage, auto-redirect on 401
+- **Protected Routes**: Wrap pages with `ProtectedRoute` component
+- **API Calls**: Use functions from `lib/api/*` modules
+- **Real-time**: WebSocket for chat, SSE for notifications
+- **Form Validation**: Zod schemas with React Hook Form
 
 ---
 
-**Status**: ✅ Phase 1 Complete - Authentication & Foundation Ready
-**Next**: Phase 2 - Accounts Management
-
-Built with ❤️ using Next.js and TypeScript
-
-
-## Getting Started
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Built with Next.js and TypeScript

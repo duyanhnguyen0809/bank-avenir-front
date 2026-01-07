@@ -44,7 +44,7 @@ export default function OrdersPage() {
   });
 
   const cancelMutation = useMutation({
-    mutationFn: (orderId: string) => ordersApi.cancelOrder(orderId),
+    mutationFn: (orderId: string) => ordersApi.cancelOrder(orderId, user?.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       toast.success('Order cancelled successfully');

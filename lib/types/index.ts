@@ -2,19 +2,29 @@
 export type UserRole = 'CLIENT' | 'MANAGER' | 'ADMIN';
 export type UserStatus = 'ACTIVE' | 'SUSPENDED' | 'CLOSED';
 
+export interface UserProfile {
+  id?: string;
+  userId?: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  postalCode?: string;
+  country?: string;
+  dateOfBirth?: string;
+}
+
 export interface User {
   id: string;
   email: string;
   role: UserRole;
-  status: UserStatus;
-  emailConfirmed: boolean;
-  profile: {
-    firstName: string;
-    lastName: string;
-    phone?: string;
-    address?: string;
-    dateOfBirth?: string;
-  };
+  status?: UserStatus;
+  emailConfirmed?: boolean;
+  profile: UserProfile;
+  accountsCount?: number;
+  accounts?: BankAccount[];
+  createdAt?: string;
 }
 
 // Account types
@@ -30,6 +40,14 @@ export interface BankAccount {
   status: string;
   name?: string;
   createdAt: string;
+  operations?: AccountOperation[]; // Last 10 operations from GET /accounts/:id
+}
+
+// Transfer response from POST /accounts/transfer
+export interface TransferResponse {
+  message: string;
+  transferId: string;
+  newBalance: number;
 }
 
 export interface AccountOperation {
@@ -100,6 +118,41 @@ export interface Trade {
 
 // Loan types
 export type LoanStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'ACTIVE' | 'COMPLETED' | 'DEFAULTED';
+export type LoanRequestStatus = 'PENDING' | 'ASSIGNED' | 'APPROVED' | 'REJECTED';
+
+export interface LoanRequest {
+  id: string;
+  userId: string;
+  accountId: string;
+  requestedAmount: number | string; // Backend may return string
+  termMonths: number;
+  purpose: string;
+  status: LoanRequestStatus;
+  managerId?: string | null;
+  approvedAmount?: number | null;
+  approvedRate?: number | null;
+  approvedTermMonths?: number | null;
+  rejectionReason?: string | null;
+  createdAt: string;
+  assignedAt?: string | null;
+  approvedAt?: string | null;
+  rejectedAt?: string | null;
+  // Populated fields
+  user?: {
+    id: string;
+    email: string;
+    profile?: {
+      firstName: string;
+      lastName: string;
+    };
+  };
+  account?: {
+    id: string;
+    iban: string;
+    accountType: string;
+    balance: number;
+  };
+}
 
 export interface Loan {
   id: string;
@@ -112,11 +165,20 @@ export interface Loan {
   monthlyPayment: number;
   status: LoanStatus;
   createdAt: string;
-  approvalDate?: string;
+  approvalDate?: string | null;
   disbursementDate?: string;
+  firstPaymentDate?: string | null;
   // Populated from user when fetching pending loans
   applicantName?: string;
   applicantEmail?: string;
+  // Account details (populated by backend)
+  account?: {
+    id: string;
+    iban: string;
+    accountType: string;
+    balance: number;
+    currency: string;
+  };
 }
 
 export interface LoanSchedule {
@@ -143,6 +205,9 @@ export interface Message {
   createdAt: string;
   sender?: User;
   receiver?: User;
+  // Additional fields from backend
+  senderName?: string;
+  receiverName?: string;
 }
 
 export interface Conversation {
@@ -151,17 +216,45 @@ export interface Conversation {
   lastMessage?: Message;
   unreadCount: number;
   createdAt: string;
+  // Backend returns otherUser directly
+  otherUser?: {
+    id: string;
+    name: string;
+    role: string;
+  };
+  // Legacy fields
+  clientId?: string;
+  clientName?: string;
+  advisorId?: string;
+  advisorName?: string;
+  status?: string;
 }
 
 // Notification types
+export type NotificationType =
+  | 'LOAN_REQUEST'
+  | 'LOAN_REQUEST_ASSIGNED'
+  | 'LOAN_APPROVED'
+  | 'LOAN_REJECTED'
+  | 'ORDER_EXECUTED'
+  | 'LOAN_GRANTED'
+  | 'SAVINGS_RATE_CHANGED'
+  | 'PRIVATE_MESSAGE_SENT'
+  | 'ACCOUNT_CREDITED'
+  | 'ACCOUNT_DEBITED'
+  | 'SUCCESS'
+  | 'WARNING'
+  | 'INFO'
+  | 'ERROR';
+
 export interface Notification {
   id: string;
   userId: string;
   title: string;
   message: string;
-  type: string;
+  type: NotificationType | string;
   isRead: boolean;
-  read?: boolean; // Alias for compatibility
+  metadata?: string | null; // JSON string with additional data
   createdAt: string;
 }
 
@@ -180,11 +273,21 @@ export interface Transaction {
 
 // Admin types
 export interface DashboardStats {
-  totalUsers: number;
-  totalAccounts: number;
-  activeLoans: number;
-  totalDeposits: number;
-  totalLoanAmount: number;
+  users: {
+    total: number;
+  };
+  accounts: {
+    total: number;
+    totalBalance: string;
+  };
+  orders: {
+    total: number;
+    pending: number;
+  };
+  loans: {
+    total: number;
+    active: number;
+  };
 }
 
 export interface SavingsRate {

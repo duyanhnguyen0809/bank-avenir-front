@@ -185,20 +185,27 @@ export const mockAccountsApi = {
 
   async transfer(data: {
     fromAccountId: string;
-    toAccountId: string;
+    toAccountId?: string;
+    toIban?: string;
     amount: number;
     description?: string;
   }) {
     await delay(500);
     
     const fromAccount = accounts.find(a => a.id === data.fromAccountId);
-    const toAccount = accounts.find(a => a.id === data.toAccountId);
+    // Support both toAccountId and toIban for flexibility
+    const toAccount = data.toAccountId 
+      ? accounts.find(a => a.id === data.toAccountId)
+      : data.toIban 
+        ? accounts.find(a => a.iban === data.toIban)
+        : null;
     
-    if (!fromAccount || !toAccount) throw new Error('Account not found');
-    if (fromAccount.balance < data.amount) throw new Error('Insufficient funds');
+    if (!fromAccount) throw new Error('Source account not found');
+    if (!toAccount) throw new Error('Destination account not found');
+    if (Number(fromAccount.balance) < data.amount) throw new Error('Insufficient funds');
     
-    fromAccount.balance -= data.amount;
-    toAccount.balance += data.amount;
+    fromAccount.balance = Number(fromAccount.balance) - data.amount;
+    toAccount.balance = Number(toAccount.balance) + data.amount;
     
     const transferId = generateId();
     
@@ -216,7 +223,7 @@ export const mockAccountsApi = {
       },
       {
         id: generateId(),
-        accountId: data.toAccountId,
+        accountId: toAccount.id,
         type: 'TRANSFER',
         amount: data.amount,
         currency: toAccount.currency,
@@ -238,9 +245,10 @@ export const mockSecuritiesApi = {
     return securities;
   },
 
-  async getSecurity(securityId: string): Promise<Security> {
+  async getSecurity(symbolOrId: string): Promise<Security> {
     await delay(300);
-    const security = securities.find(s => s.id === securityId);
+    // Find by symbol first (primary), then by id (fallback)
+    const security = securities.find(s => s.symbol === symbolOrId) || securities.find(s => s.id === symbolOrId);
     if (!security) throw new Error('Security not found');
     return security;
   },
@@ -255,15 +263,16 @@ export const mockSecuritiesApi = {
     );
   },
 
-  async getOrderBook(securityId: string) {
+  async getOrderBook(symbolOrId: string) {
     await delay(300);
     // Return order book with slight price variations
-    const security = securities.find(s => s.id === securityId);
+    // Find by symbol first (primary), then by id (fallback)
+    const security = securities.find(s => s.symbol === symbolOrId) || securities.find(s => s.id === symbolOrId);
     if (!security) throw new Error('Security not found');
-    
+
     const basePrice = security.currentPrice;
     return {
-      securityId,
+      symbol: security.symbol,
       bids: Array.from({ length: 5 }, (_, i) => ({
         price: Number((basePrice - (i + 1) * 0.05).toFixed(2)),
         quantity: Math.floor(Math.random() * 500) + 100,
@@ -301,19 +310,20 @@ export const mockOrdersApi = {
     price: number;
   }): Promise<Order> {
     await delay(600);
-    
+
+    // Find security by id
     const security = securities.find(s => s.id === data.securityId);
     if (!security) throw new Error('Security not found');
-    
+
     const account = accounts.find(a => a.id === data.accountId);
     if (!account) throw new Error('Account not found');
-    
+
     const totalAmount = data.quantity * data.price;
-    
+
     if (data.type === 'BUY' && account.balance < totalAmount) {
       throw new Error('Insufficient funds');
     }
-    
+
     const newOrder: Order = {
       id: generateId(),
       userId: data.userId,
@@ -398,24 +408,24 @@ export const mockLoansApi = {
   async applyForLoan(data: {
     userId: string;
     accountId: string;
-    type: 'PERSONAL' | 'MORTGAGE' | 'AUTO' | 'STUDENT';
-    amount: number;
+    purpose: 'PERSONAL' | 'MORTGAGE' | 'AUTO' | 'STUDENT';
+    requestedAmount: number;
     termMonths: number;
   }): Promise<Loan> {
     await delay(800);
     
     // Calculate monthly payment (simplified formula)
-    const annualRate = data.type === 'MORTGAGE' ? 3.8 : data.type === 'AUTO' ? 4.2 : data.type === 'STUDENT' ? 3.5 : 5.5;
+    const annualRate = data.purpose === 'MORTGAGE' ? 3.8 : data.purpose === 'AUTO' ? 4.2 : data.purpose === 'STUDENT' ? 3.5 : 5.5;
     const insuranceRate = 0.3;
     const monthlyRate = annualRate / 100 / 12;
-    const monthlyPayment = (data.amount * monthlyRate * Math.pow(1 + monthlyRate, data.termMonths)) /
+    const monthlyPayment = (data.requestedAmount * monthlyRate * Math.pow(1 + monthlyRate, data.termMonths)) /
       (Math.pow(1 + monthlyRate, data.termMonths) - 1);
     
     const newLoan: Loan = {
       id: generateId(),
       userId: data.userId,
       accountId: data.accountId,
-      amount: data.amount,
+      amount: data.requestedAmount,
       interestRate: annualRate,
       insuranceRate: insuranceRate,
       durationMonths: data.termMonths,
@@ -432,7 +442,7 @@ export const mockLoansApi = {
       userId: data.userId,
       type: 'INFO',
       title: 'Loan Application Received',
-      message: `Your ${data.type.toLowerCase()} loan application for €${data.amount.toLocaleString()} is under review.`,
+      message: `Your ${data.purpose.toLowerCase()} loan application for €${data.requestedAmount.toLocaleString()} is under review.`,
       isRead: false,
       createdAt: new Date().toISOString(),
     });
@@ -492,14 +502,14 @@ export const mockNotificationsApi = {
     await delay(200);
     const notification = notifications.find(n => n.id === notificationId);
     if (!notification) throw new Error('Notification not found');
-    notification.read = true;
+    notification.isRead = true;
     return notification;
   },
 
   async markAllAsRead(userId: string): Promise<void> {
     await delay(300);
     notifications.forEach(n => {
-      if (n.userId === userId) n.read = true;
+      if (n.userId === userId) n.isRead = true;
     });
   },
 
@@ -508,7 +518,7 @@ export const mockNotificationsApi = {
     // Include admin notifications in unread count
     const adminNotifications = getMockNotificationsForUser(userId);
     const allNotifications = [...notifications, ...adminNotifications];
-    return allNotifications.filter(n => n.userId === userId && !n.read && !n.isRead).length;
+    return allNotifications.filter(n => n.userId === userId && !n.isRead).length;
   },
 };
 

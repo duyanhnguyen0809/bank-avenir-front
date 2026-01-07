@@ -30,21 +30,31 @@ export const authApi = {
       return { accessToken: result.token, user: result.user };
     }
     const response = await api.post('/auth/login', data);
+    // Backend returns { accessToken, user: { id, email, role, profile } }
+    return {
+      accessToken: response.data.accessToken,
+      user: response.data.user,
+    };
+  },
+
+  register: async (data: RegisterRequest): Promise<{ message: string; userId: string; confirmationToken: string }> => {
+    if (USE_MOCK_API) {
+      await mockAuthApi.register(data);
+      return {
+        message: 'User registered successfully. Please check your email to confirm your account.',
+        userId: 'mock-user-id',
+        confirmationToken: 'mock-token',
+      };
+    }
+    const response = await api.post('/auth/register', data);
     return response.data;
   },
 
-  register: async (data: RegisterRequest): Promise<void> => {
+  confirmEmail: async (token: string): Promise<{ message: string; userId: string }> => {
     if (USE_MOCK_API) {
-      await mockAuthApi.register(data);
-      return;
+      return { message: 'Email confirmed successfully', userId: 'mock-user-id' };
     }
-    await api.post('/auth/register', data);
-  },
-
-  confirmEmail: async (token: string): Promise<void> => {
-    if (USE_MOCK_API) {
-      return; // No-op for mock
-    }
-    await api.get(`/auth/confirm/${token}`);
+    const response = await api.get(`/auth/confirm/${token}`);
+    return response.data;
   },
 };

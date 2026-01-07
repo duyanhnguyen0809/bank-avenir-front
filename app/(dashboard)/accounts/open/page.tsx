@@ -51,10 +51,18 @@ export default function OpenAccountPage() {
         ...data,
         userId: user!.id,
       }),
-    onSuccess: (newAccount) => {
+    onSuccess: (newAccount: any) => {
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
       toast.success('Account opened successfully!');
-      router.push(`/accounts/${newAccount.id}`);
+      // Handle different response formats from backend
+      const accountId = newAccount.id || newAccount.accountId || newAccount._id;
+      if (accountId) {
+        router.push(`/accounts/${accountId}`);
+      } else {
+        // Fallback to accounts list if no ID returned
+        console.log('Account response:', newAccount);
+        router.push('/accounts');
+      }
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to open account');

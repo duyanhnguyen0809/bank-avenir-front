@@ -69,11 +69,11 @@ export default function NotificationsPage() {
     return d.toLocaleDateString();
   };
 
-  const unreadNotifications = notifications?.filter(n => !n.isRead && !n.read) || [];
+  const unreadNotifications = notifications?.filter(n => !n.isRead) || [];
   const allNotifications = notifications || [];
 
   const renderNotificationCard = (notification: Notification) => {
-    const isUnread = !notification.isRead && !notification.read;
+    const isUnread = !notification.isRead;
     
     return (
       <div

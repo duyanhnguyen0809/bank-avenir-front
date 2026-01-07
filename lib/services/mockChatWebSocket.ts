@@ -155,11 +155,10 @@ class MockChatWebSocketService {
         const notification: Notification = {
           id: generateId(),
           userId: receiverId,
-          type: 'INFO',
+          type: 'PRIVATE_MESSAGE_SENT',
           title: '💬 New Message',
           message: `New message from ${this.userName}: "${content.substring(0, 50)}${content.length > 50 ? '...' : ''}"`,
           isRead: false,
-          read: false,
           createdAt: new Date().toISOString(),
         };
         mockState.notifications.push(notification);
@@ -227,7 +226,6 @@ class MockChatWebSocketService {
         title: '🎉 Help Request Accepted',
         message: `An advisor (${this.userName}) has accepted your help request and will assist you shortly.`,
         isRead: false,
-        read: false,
         createdAt: new Date().toISOString(),
       };
       mockState.notifications.push(notification);

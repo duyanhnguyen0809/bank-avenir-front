@@ -53,7 +53,7 @@ export default function AccountsPage() {
     );
   }
 
-  const totalBalance = accounts?.reduce((sum, acc) => sum + acc.balance, 0) || 0;
+  const totalBalance = accounts?.reduce((sum, acc) => sum + Number(acc.balance), 0) || 0;
   const accountsByType = {
     CHECKING: accounts?.filter(a => a.accountType === 'CHECKING') || [],
     SAVINGS: accounts?.filter(a => a.accountType === 'SAVINGS') || [],

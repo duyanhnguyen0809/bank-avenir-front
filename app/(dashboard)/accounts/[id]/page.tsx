@@ -1,14 +1,24 @@
 'use client';
 
 import { use, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { accountsApi } from '@/lib/api/accounts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, CreditCard, TrendingUp, ArrowUpCircle, ArrowDownCircle, Copy, Check } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { ArrowLeft, CreditCard, TrendingUp, ArrowUpCircle, ArrowDownCircle, Copy, Check, Send, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { formatCurrency, formatDateTime } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -19,18 +29,68 @@ interface AccountDetailsPageProps {
 
 export default function AccountDetailsPage({ params }: AccountDetailsPageProps) {
   const { id } = use(params);
+  const queryClient = useQueryClient();
   const [copied, setCopied] = useState(false);
+  const [transferDialogOpen, setTransferDialogOpen] = useState(false);
+  const [transferForm, setTransferForm] = useState({
+    toIban: '',
+    amount: '',
+    description: '',
+  });
 
   const { data: account, isLoading: accountLoading } = useQuery({
     queryKey: ['account', id],
     queryFn: () => accountsApi.getAccount(id),
   });
 
-  const { data: operations, isLoading: operationsLoading } = useQuery({
-    queryKey: ['operations', id],
-    queryFn: () => accountsApi.getAccountOperations(id),
-    enabled: !!id,
+  // Transfer mutation
+  const transferMutation = useMutation({
+    mutationFn: (data: { fromAccountId: string; toIban: string; amount: number; description?: string }) =>
+      accountsApi.transfer(data),
+    onSuccess: (response) => {
+      toast.success('Transfer successful!', {
+        description: response.message || `Transfer ID: ${response.transferId}`,
+      });
+      setTransferDialogOpen(false);
+      setTransferForm({ toIban: '', amount: '', description: '' });
+      // Refresh account data (which includes operations)
+      queryClient.invalidateQueries({ queryKey: ['account', id] });
+    },
+    onError: (error: Error) => {
+      toast.error('Transfer failed', {
+        description: error.message || 'Please check your details and try again.',
+      });
+    },
   });
+
+  const handleTransfer = (e: React.FormEvent) => {
+    e.preventDefault();
+    const amount = parseFloat(transferForm.amount);
+
+    if (!transferForm.toIban.trim()) {
+      toast.error('Please enter a recipient IBAN');
+      return;
+    }
+    if (isNaN(amount) || amount <= 0) {
+      toast.error('Please enter a valid amount');
+      return;
+    }
+    if (account && amount > account.balance) {
+      toast.error('Insufficient balance');
+      return;
+    }
+
+    transferMutation.mutate({
+      fromAccountId: id,
+      toIban: transferForm.toIban.trim(),
+      amount,
+      description: transferForm.description.trim() || undefined,
+    });
+  };
+
+  // Operations come from the account data (GET /accounts/:id returns operations)
+  const operations = account?.operations || [];
+  const operationsLoading = accountLoading;
 
   const copyIban = () => {
     if (account?.iban) {
@@ -77,18 +137,52 @@ export default function AccountDetailsPage({ params }: AccountDetailsPageProps) 
     }
   };
 
-  const getOperationIcon = (type: string) => {
-    if (type.includes('CREDIT') || type === 'DEPOSIT') {
+  // Determine if operation is credit (money in) or debit (money out)
+  const isCredit = (operation: { type: string; amount: number; senderIban?: string; recipientIban?: string }) => {
+    const type = operation.type.toUpperCase();
+    // Deposits are always credits
+    if (type === 'DEPOSIT' || type.includes('CREDIT')) {
+      return true;
+    }
+    // Withdrawals are always debits
+    if (type === 'WITHDRAWAL' || type.includes('DEBIT')) {
+      return false;
+    }
+    // For transfers:
+    // - senderIban present = incoming transfer (someone sent money to this account) = credit
+    // - recipientIban present = outgoing transfer (this account sent money) = debit
+    if (type === 'TRANSFER') {
+      // If senderIban is set, we received money from that IBAN (credit)
+      if (operation.senderIban) {
+        return true;
+      }
+      // If recipientIban is set, we sent money to that IBAN (debit)
+      if (operation.recipientIban) {
+        return false;
+      }
+      // Fallback to amount sign
+      return operation.amount > 0;
+    }
+    // Default: check amount sign
+    return operation.amount > 0;
+  };
+
+  const getOperationIcon = (operation: { type: string; amount: number; senderIban?: string; recipientIban?: string }) => {
+    if (isCredit(operation)) {
       return <ArrowDownCircle className="h-5 w-5 text-green-600" />;
     }
     return <ArrowUpCircle className="h-5 w-5 text-red-600" />;
   };
 
-  const getOperationColor = (type: string) => {
-    if (type.includes('CREDIT') || type === 'DEPOSIT') {
+  const getOperationColor = (operation: { type: string; amount: number; senderIban?: string; recipientIban?: string }) => {
+    if (isCredit(operation)) {
       return 'text-green-600';
     }
     return 'text-red-600';
+  };
+
+  const getAmountPrefix = (operation: { type: string; amount: number; senderIban?: string; recipientIban?: string }) => {
+    return isCredit(operation) ? '+' : '-';
   };
 
   return (
@@ -178,19 +272,96 @@ export default function AccountDetailsPage({ params }: AccountDetailsPageProps) 
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Button variant="outline" className="h-auto py-4 flex-col gap-2">
+        <Button variant="outline" className="h-auto py-4 flex-col gap-2" disabled>
           <ArrowDownCircle className="h-6 w-6" />
           <span>Deposit</span>
         </Button>
-        <Button variant="outline" className="h-auto py-4 flex-col gap-2">
+        <Button variant="outline" className="h-auto py-4 flex-col gap-2" disabled>
           <ArrowUpCircle className="h-6 w-6" />
           <span>Withdraw</span>
         </Button>
-        <Button variant="outline" className="h-auto py-4 flex-col gap-2">
-          <CreditCard className="h-6 w-6" />
+        <Button
+          variant="outline"
+          className="h-auto py-4 flex-col gap-2"
+          onClick={() => setTransferDialogOpen(true)}
+        >
+          <Send className="h-6 w-6" />
           <span>Transfer</span>
         </Button>
       </div>
+
+      {/* Transfer Dialog */}
+      <Dialog open={transferDialogOpen} onOpenChange={setTransferDialogOpen}>
+        <DialogContent className="sm:max-w-106.25">
+          <DialogHeader>
+            <DialogTitle>Transfer Money</DialogTitle>
+            <DialogDescription>
+              Send money to another account. Available balance: {formatCurrency(account.balance, account.currency)}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleTransfer}>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="toIban">Recipient IBAN</Label>
+                <Input
+                  id="toIban"
+                  placeholder="e.g., FR76 1234 5678 9012 3456 7890 123"
+                  value={transferForm.toIban}
+                  onChange={(e) => setTransferForm({ ...transferForm, toIban: e.target.value })}
+                  disabled={transferMutation.isPending}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="amount">Amount ({account.currency})</Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  max={account.balance}
+                  placeholder="0.00"
+                  value={transferForm.amount}
+                  onChange={(e) => setTransferForm({ ...transferForm, amount: e.target.value })}
+                  disabled={transferMutation.isPending}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="description">Description (optional)</Label>
+                <Input
+                  id="description"
+                  placeholder="e.g., Rent payment"
+                  value={transferForm.description}
+                  onChange={(e) => setTransferForm({ ...transferForm, description: e.target.value })}
+                  disabled={transferMutation.isPending}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setTransferDialogOpen(false)}
+                disabled={transferMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={transferMutation.isPending}>
+                {transferMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Transferring...
+                  </>
+                ) : (
+                  <>
+                    <Send className="mr-2 h-4 w-4" />
+                    Transfer
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Transactions */}
       <Card>
@@ -222,7 +393,7 @@ export default function AccountDetailsPage({ params }: AccountDetailsPageProps) 
                     <TableRow key={operation.id}>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          {getOperationIcon(operation.type)}
+                          {getOperationIcon(operation)}
                           <Badge variant="outline">{operation.type}</Badge>
                         </div>
                       </TableCell>
@@ -240,8 +411,8 @@ export default function AccountDetailsPage({ params }: AccountDetailsPageProps) 
                       <TableCell className="text-sm text-gray-500">
                         {formatDateTime(operation.createdAt)}
                       </TableCell>
-                      <TableCell className={`text-right font-medium ${getOperationColor(operation.type)}`}>
-                        {operation.type.includes('CREDIT') || operation.type === 'DEPOSIT' ? '+' : '-'}
+                      <TableCell className={`text-right font-medium ${getOperationColor(operation)}`}>
+                        {getAmountPrefix(operation)}
                         {formatCurrency(Math.abs(operation.amount), account.currency)}
                       </TableCell>
                       <TableCell className="text-right font-mono text-sm">

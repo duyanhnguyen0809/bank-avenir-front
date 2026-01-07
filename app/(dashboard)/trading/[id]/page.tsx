@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, use } from 'react';
+import { useState, use, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
@@ -72,9 +72,11 @@ export default function SecurityDetailPage({ params }: { params: Promise<{ id: s
   });
 
   // Update price when security loads
-  if (security && !watch('price')) {
-    setValue('price', security.currentPrice);
-  }
+  useEffect(() => {
+    if (security?.currentPrice) {
+      setValue('price', security.currentPrice);
+    }
+  }, [security?.currentPrice, setValue]);
 
   const quantity = watch('quantity') || 0;
   const price = watch('price') || 0;
@@ -87,7 +89,7 @@ export default function SecurityDetailPage({ params }: { params: Promise<{ id: s
       ordersApi.placeOrder({
         userId: user!.id,
         accountId: data.accountId,
-        securityId: resolvedParams.id,
+        securityId: security!.id,  // Use the security UUID from fetched data
         type: orderType,
         quantity: data.quantity,
         price: data.price,
@@ -104,7 +106,7 @@ export default function SecurityDetailPage({ params }: { params: Promise<{ id: s
   });
 
   const onSubmit = (data: OrderFormData) => {
-    if (orderType === 'BUY' && selectedAccount && totalAmount > selectedAccount.balance) {
+    if (orderType === 'BUY' && selectedAccount && totalAmount > Number(selectedAccount.balance)) {
       toast.error('Insufficient funds in selected account');
       return;
     }
@@ -290,7 +292,7 @@ export default function SecurityDetailPage({ params }: { params: Promise<{ id: s
                     {selectedAccount && orderType === 'BUY' && (
                       <div className="flex justify-between text-sm text-gray-500">
                         <span>Available Balance</span>
-                        <span className={totalAmount > selectedAccount.balance ? 'text-red-500' : ''}>
+                        <span className={totalAmount > Number(selectedAccount.balance) ? 'text-red-500' : ''}>
                           {formatCurrency(selectedAccount.balance)}
                         </span>
                       </div>

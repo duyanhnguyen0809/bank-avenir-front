@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+// Use /backend prefix which will be proxied to the backend via Next.js rewrites
+// This avoids CORS issues since requests go through the same origin
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
+  baseURL: '/backend',
   headers: {
     'Content-Type': 'application/json',
   },

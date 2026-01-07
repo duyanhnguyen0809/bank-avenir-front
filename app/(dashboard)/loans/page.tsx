@@ -14,26 +14,38 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, DollarSign, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Plus, DollarSign, Clock, CheckCircle, AlertCircle, FileText } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import Link from 'next/link';
-import { LoanStatus } from '@/lib/types';
+import { LoanStatus, LoanRequestStatus } from '@/lib/types';
 
 export default function LoansPage() {
   const { user } = useAuthStore();
 
-  const { data: loans, isLoading } = useQuery({
+  // Fetch granted loans
+  const { data: loans, isLoading: loansLoading } = useQuery({
     queryKey: ['loans', user?.id],
     queryFn: () => loansApi.getUserLoans(user!.id),
     enabled: !!user?.id,
   });
 
-  const getStatusBadge = (status: LoanStatus) => {
+  // Fetch loan requests
+  const { data: loanRequests, isLoading: requestsLoading } = useQuery({
+    queryKey: ['loanRequests'],
+    queryFn: () => loansApi.getMyLoanRequests(),
+    enabled: !!user?.id,
+  });
+
+  const isLoading = loansLoading || requestsLoading;
+
+  const getStatusBadge = (status: LoanStatus | LoanRequestStatus) => {
     switch (status) {
       case 'PENDING':
         return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
+      case 'ASSIGNED':
+        return <Badge className="bg-blue-100 text-blue-800">Assigned</Badge>;
       case 'APPROVED':
-        return <Badge className="bg-blue-100 text-blue-800">Approved</Badge>;
+        return <Badge className="bg-green-100 text-green-800">Approved</Badge>;
       case 'ACTIVE':
         return <Badge className="bg-green-100 text-green-800">Active</Badge>;
       case 'COMPLETED':
@@ -51,7 +63,8 @@ export default function LoansPage() {
   const activeLoans = loans?.filter(l => l.status === 'ACTIVE') || [];
   const totalDebt = activeLoans.reduce((sum, l) => sum + l.amount, 0);
   const monthlyPayments = activeLoans.reduce((sum, l) => sum + l.monthlyPayment, 0);
-  const pendingLoans = loans?.filter(l => l.status === 'PENDING').length || 0;
+  const pendingRequests = loanRequests?.filter(r => r.status === 'PENDING' || r.status === 'ASSIGNED').length || 0;
+  const totalRequests = loanRequests?.length || 0;
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -110,17 +123,71 @@ export default function LoansPage() {
               <AlertCircle className="h-4 w-4 md:h-5 md:w-5 text-yellow-500" />
               <span className="text-xs md:text-sm text-gray-500">Pending</span>
             </div>
-            <div className="text-lg md:text-2xl font-bold">{pendingLoans}</div>
+            <div className="text-lg md:text-2xl font-bold">{pendingRequests}</div>
             <p className="text-xs text-gray-500">Awaiting approval</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Loans Table */}
+      {/* Loan Requests Table */}
+      {totalRequests > 0 && (
+        <Card>
+          <CardHeader className="p-4 md:p-6">
+            <CardTitle className="text-lg md:text-xl flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Loan Requests
+            </CardTitle>
+            <CardDescription className="text-xs md:text-sm">Your loan applications and their status</CardDescription>
+          </CardHeader>
+          <CardContent className="p-0 md:p-6 md:pt-0">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="whitespace-nowrap">Request ID</TableHead>
+                    <TableHead className="text-right whitespace-nowrap">Amount</TableHead>
+                    <TableHead className="text-right whitespace-nowrap hidden md:table-cell">Duration</TableHead>
+                    <TableHead className="whitespace-nowrap hidden sm:table-cell">Purpose</TableHead>
+                    <TableHead className="whitespace-nowrap">Status</TableHead>
+                    <TableHead className="text-right whitespace-nowrap hidden lg:table-cell">Created</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loanRequests?.map((request) => (
+                    <TableRow key={request.id}>
+                      <TableCell className="font-mono text-xs">
+                        {request.id.slice(0, 8)}...
+                      </TableCell>
+                      <TableCell className="text-right font-medium whitespace-nowrap">
+                        {formatCurrency(Number(request.requestedAmount), 'EUR')}
+                      </TableCell>
+                      <TableCell className="text-right hidden md:table-cell">
+                        {request.termMonths} months
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell max-w-50 truncate">
+                        {request.purpose}
+                      </TableCell>
+                      <TableCell>{getStatusBadge(request.status)}</TableCell>
+                      <TableCell className="text-right text-gray-500 hidden lg:table-cell">
+                        {new Date(request.createdAt).toLocaleDateString()}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Active Loans Table */}
       <Card>
         <CardHeader className="p-4 md:p-6">
-          <CardTitle className="text-lg md:text-xl">My Loans</CardTitle>
-          <CardDescription className="text-xs md:text-sm">View all your loan applications and active loans</CardDescription>
+          <CardTitle className="text-lg md:text-xl flex items-center gap-2">
+            <DollarSign className="h-5 w-5" />
+            Active Loans
+          </CardTitle>
+          <CardDescription className="text-xs md:text-sm">Your granted and active loans</CardDescription>
         </CardHeader>
         <CardContent className="p-0 md:p-6 md:pt-0">
           {isLoading ? (
@@ -177,11 +244,8 @@ export default function LoansPage() {
           ) : (
             <div className="text-center py-12 text-gray-500">
               <DollarSign className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="text-lg font-medium">No loans yet</p>
-              <p className="text-sm mt-1">Apply for your first loan to get started</p>
-              <Link href="/loans/apply">
-                <Button className="mt-4">Apply for Loan</Button>
-              </Link>
+              <p className="text-lg font-medium">No active loans</p>
+              <p className="text-sm mt-1">Your approved loans will appear here</p>
             </div>
           )}
         </CardContent>

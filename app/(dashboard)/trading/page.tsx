@@ -161,7 +161,7 @@ export default function TradingPage() {
           ) : filteredSecurities && filteredSecurities.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredSecurities.map((security) => (
-                <Link key={security.id} href={`/trading/${security.id}`}>
+                <Link key={security.id} href={`/trading/${security.symbol}`}>
                   <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
                     <CardContent className="pt-6">
                       <div className="flex items-start justify-between mb-3">

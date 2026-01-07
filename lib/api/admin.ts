@@ -61,11 +61,10 @@ const generateId = () => Math.random().toString(36).substr(2, 9);
 const mockAdminApi = {
   async getDashboardStats(): Promise<DashboardStats> {
     return {
-      totalUsers: 156,
-      totalAccounts: 312,
-      activeLoans: 45,
-      totalDeposits: 2450000,
-      totalLoanAmount: 890000,
+      users: { total: 156 },
+      accounts: { total: 312, totalBalance: '2450000' },
+      orders: { total: 50, pending: 5 },
+      loans: { total: 45, active: 30 },
     };
   },
 
@@ -144,36 +143,34 @@ const mockAdminApi = {
     const notification: Notification = {
       id: generateId(),
       userId: loan.userId,
-      type: 'SUCCESS',
+      type: 'LOAN_APPROVED',
       title: '🎉 Loan Approved!',
       message: `Great news! Your loan application for €${loan.amount.toLocaleString()} has been approved. The funds will be disbursed to your account within 2-3 business days.`,
       isRead: false,
-      read: false,
       createdAt: new Date().toISOString(),
     };
     mockNotifications.push(notification);
-    
+
     console.log('📧 Notification sent to client:', notification);
-    
+
     return loan;
   },
 
   async rejectLoan(loanId: string): Promise<Loan> {
     const loanIndex = mockPendingLoans.findIndex(l => l.id === loanId);
     if (loanIndex === -1) throw new Error('Loan not found');
-    
+
     const loan = mockPendingLoans[loanIndex];
     loan.status = 'REJECTED';
-    
+
     // Create notification for the client
     const notification: Notification = {
       id: generateId(),
       userId: loan.userId,
-      type: 'WARNING',
+      type: 'LOAN_REJECTED',
       title: 'Loan Application Update',
       message: `We regret to inform you that your loan application for €${loan.amount.toLocaleString()} has not been approved at this time. Please contact our support team for more information.`,
       isRead: false,
-      read: false,
       createdAt: new Date().toISOString(),
     };
     mockNotifications.push(notification);
@@ -185,35 +182,41 @@ const mockAdminApi = {
 };
 
 export const adminApi = {
+  // ========== DASHBOARD ==========
+  // GET /admin/dashboard - Get platform statistics
   getDashboardStats: async (): Promise<DashboardStats> => {
     if (USE_MOCK_API) {
       return mockAdminApi.getDashboardStats();
     }
-    const response = await api.get('/admin/dashboard-stats');
-    return response.data;
+    const response = await api.get('/admin/dashboard');
+    return response.data.stats || response.data;
   },
 
+  // ========== USERS MANAGEMENT ==========
+  // GET /admin/users - Get all users
   getAllUsers: async (): Promise<User[]> => {
     if (USE_MOCK_API) {
       return mockAdminApi.getAllUsers();
     }
     const response = await api.get('/admin/users');
-    return response.data;
+    return response.data.users || response.data;
   },
 
+  // PUT /admin/users/:id/role - Update user role (ADMIN only)
+  updateUserRole: async (userId: string, role: 'CLIENT' | 'MANAGER' | 'ADMIN'): Promise<User> => {
+    if (USE_MOCK_API) {
+      return mockAdminApi.updateUserStatus(userId, 'ACTIVE');
+    }
+    const response = await api.put(`/admin/users/${userId}/role`, { role });
+    return response.data.user || response.data;
+  },
+
+  // ========== LOAN REQUESTS MANAGEMENT ==========
   getPendingLoans: async (): Promise<Loan[]> => {
     if (USE_MOCK_API) {
       return mockAdminApi.getPendingLoans();
     }
     const response = await api.get('/admin/loans/pending');
-    return response.data;
-  },
-
-  updateUserStatus: async (userId: string, status: 'ACTIVE' | 'SUSPENDED' | 'CLOSED'): Promise<User> => {
-    if (USE_MOCK_API) {
-      return mockAdminApi.updateUserStatus(userId, status);
-    }
-    const response = await api.patch(`/admin/users/${userId}/status`, { status });
     return response.data;
   },
 
@@ -233,40 +236,77 @@ export const adminApi = {
     return response.data;
   },
 
-  updateUserRole: async (userId: string, role: 'CLIENT' | 'MANAGER' | 'ADMIN'): Promise<User> => {
+  // ========== SAVINGS RATES (ADMIN ONLY) ==========
+  // POST /admin/savings-rate - Create savings rate
+  createSavingsRate: async (data: {
+    accountType: 'CHECKING' | 'SAVINGS' | 'INVESTMENT';
+    rate: number;  // Decimal format (e.g., 0.035 for 3.5%)
+    minBalance: number;
+    effectiveDate: string;  // ISO date string (e.g., "2027-01-01")
+  }): Promise<{ message: string; rate: any }> => {
     if (USE_MOCK_API) {
-      return mockAdminApi.updateUserStatus(userId, 'ACTIVE'); // Mock fallback
+      return { message: 'Savings rate created', rate: { id: Date.now().toString(), ...data } };
     }
-    const response = await api.put(`/admin/users/${userId}/role`, { role });
+    const response = await api.post('/admin/savings-rate', data);
     return response.data;
   },
 
-  createSavingsRate: async (data: {
-    accountType: 'CHECKING' | 'SAVINGS' | 'INVESTMENT';
-    rate: number;
-    minBalance: number;
-    effectiveDate: string;
-  }): Promise<void> => {
-    if (USE_MOCK_API) {
-      return; // No-op for mock
-    }
-    await api.post('/admin/savings-rate', data);
-  },
-
-  getSavingsRates: async (): Promise<Array<{
-    id: string;
-    accountType: string;
-    rate: number;
-    minBalance: number;
-    effectiveDate: string;
-  }>> => {
+  // GET /admin/savings-rates - Get all savings rates
+  getSavingsRates: async (): Promise<any[]> => {
     if (USE_MOCK_API) {
       return [
-        { id: '1', accountType: 'SAVINGS', rate: 0.025, minBalance: 1000, effectiveDate: '2026-01-01' },
-        { id: '2', accountType: 'CHECKING', rate: 0.005, minBalance: 0, effectiveDate: '2026-01-01' },
+        { id: '1', accountType: 'SAVINGS', rate: 0.025, minBalance: 1000, effectiveDate: '2025-01-01' },
+        { id: '2', accountType: 'CHECKING', rate: 0.005, minBalance: 0, effectiveDate: '2025-01-01' },
+        { id: '3', accountType: 'INVESTMENT', rate: 0.045, minBalance: 5000, effectiveDate: '2025-01-01' },
       ];
     }
     const response = await api.get('/admin/savings-rates');
+    return response.data.rates || response.data;
+  },
+
+  // ========== SECURITIES/STOCKS (ADMIN ONLY) ==========
+  
+  // GET /admin/securities - Get all securities (ADMIN + MANAGER)
+  getAllSecurities: async () => {
+    const response = await api.get('/admin/securities');
+    return response.data.securities || response.data;
+  },
+
+  // POST /admin/securities - Create a new security
+  createSecurity: async (data: {
+    symbol: string;
+    name: string;
+    type: string;
+    exchange?: string;
+    currentPrice: number;
+    currency?: string;
+  }) => {
+    const response = await api.post('/admin/securities', data);
+    return response.data.security || response.data;
+  },
+
+  // POST /admin/stocks - Create stock
+  createStock: async (data: {
+    symbol: string;
+    name: string;
+    type: string;
+    exchange?: string;
+    currentPrice: number;
+    currency?: string;
+  }) => {
+    const response = await api.post('/admin/stocks', data);
+    return response.data.stock || response.data;
+  },
+
+  // PUT /admin/stocks/:symbol/availability - Enable/disable stock
+  updateStockAvailability: async (symbol: string, isAvailable: boolean, reason?: string) => {
+    const response = await api.put(`/admin/stocks/${symbol}/availability`, { isAvailable, reason });
+    return response.data.stock || response.data;
+  },
+
+  // DELETE /admin/stocks/:symbol - Delete a stock
+  deleteStock: async (symbol: string) => {
+    const response = await api.delete(`/admin/stocks/${symbol}`);
     return response.data;
   },
 };

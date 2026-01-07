@@ -9,9 +9,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { CreditCard, TrendingUp, DollarSign, Activity } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
+
+  // Redirect admin/manager to their respective dashboards
+  if (user?.role === 'ADMIN') {
+    redirect('/admin');
+  }
+  if (user?.role === 'MANAGER') {
+    redirect('/advisor');
+  }
 
   // Fetch user data
   const { data: accounts } = useQuery({
@@ -33,10 +42,10 @@ export default function DashboardPage() {
   });
 
   // Calculate stats
-  const totalBalance = accounts?.reduce((sum, acc) => sum + acc.balance, 0) || 0;
+  const totalBalance = accounts?.reduce((sum, acc) => sum + Number(acc.balance), 0) || 0;
   
   const investmentAccounts = accounts?.filter(a => a.accountType === 'INVESTMENT') || [];
-  const portfolioValue = investmentAccounts.reduce((sum, acc) => sum + acc.balance, 0);
+  const portfolioValue = investmentAccounts.reduce((sum, acc) => sum + Number(acc.balance), 0);
 
   const activeLoans = loans?.filter(l => l.status === 'ACTIVE').length || 0;
   const openOrders = orders?.filter(o => o.status === 'PENDING').length || 0;

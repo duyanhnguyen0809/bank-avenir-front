@@ -1,10 +1,10 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/lib/store/authStore';
 import { adminApi } from '@/lib/api/admin';
+import { loansApi } from '@/lib/api/loans';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -16,41 +16,20 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import {
   Users,
   CreditCard,
   DollarSign,
   TrendingUp,
-  MoreHorizontal,
-  Check,
-  X,
-  UserCog,
   Shield,
+  Clock,
+  UserCheck,
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { redirect } from 'next/navigation';
-import { toast } from 'sonner';
-import { User, Loan } from '@/lib/types';
+import { LoanRequest } from '@/lib/types';
 
 export default function AdminPage() {
   const { user } = useAuthStore();
-  const queryClient = useQueryClient();
 
   // Redirect non-admin users
   if (user && user.role !== 'ADMIN') {
@@ -67,45 +46,16 @@ export default function AdminPage() {
     queryFn: () => adminApi.getAllUsers(),
   });
 
-  const { data: pendingLoans, isLoading: loansLoading } = useQuery({
-    queryKey: ['pendingLoans'],
-    queryFn: () => adminApi.getPendingLoans(),
+  // Fetch loan requests using the same API as manager/advisor
+  const { data: loanRequests, isLoading: loansLoading } = useQuery({
+    queryKey: ['loanRequests'],
+    queryFn: () => loansApi.getPendingRequests(),
   });
 
-  const updateStatusMutation = useMutation({
-    mutationFn: ({ userId, status }: { userId: string; status: 'ACTIVE' | 'SUSPENDED' | 'CLOSED' }) =>
-      adminApi.updateUserStatus(userId, status),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
-      toast.success('User status updated');
-    },
-    onError: () => {
-      toast.error('Failed to update user status');
-    },
-  });
-
-  const approveLoanMutation = useMutation({
-    mutationFn: (loanId: string) => adminApi.approveLoan(loanId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pendingLoans'] });
-      queryClient.invalidateQueries({ queryKey: ['adminStats'] });
-      toast.success('Loan approved successfully');
-    },
-    onError: () => {
-      toast.error('Failed to approve loan');
-    },
-  });
-
-  const rejectLoanMutation = useMutation({
-    mutationFn: (loanId: string) => adminApi.rejectLoan(loanId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pendingLoans'] });
-      toast.success('Loan rejected');
-    },
-    onError: () => {
-      toast.error('Failed to reject loan');
-    },
-  });
+  // Filter pending and assigned requests
+  const pendingRequests = loanRequests?.filter((r: LoanRequest) => r.status === 'PENDING') || [];
+  const assignedRequests = loanRequests?.filter((r: LoanRequest) => r.status === 'ASSIGNED') || [];
+  const allRequests = loanRequests || [];
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -133,6 +83,21 @@ export default function AdminPage() {
     }
   };
 
+  const getLoanStatusBadge = (status: string) => {
+    switch (status) {
+      case 'PENDING':
+        return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
+      case 'ASSIGNED':
+        return <Badge className="bg-blue-100 text-blue-800">Assigned</Badge>;
+      case 'APPROVED':
+        return <Badge className="bg-green-100 text-green-800">Approved</Badge>;
+      case 'REJECTED':
+        return <Badge className="bg-red-100 text-red-800">Rejected</Badge>;
+      default:
+        return <Badge>{status}</Badge>;
+    }
+  };
+
   return (
     <div className="space-y-4 md:space-y-6">
       {/* Header */}
@@ -147,14 +112,14 @@ export default function AdminPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
         <Card>
           <CardContent className="p-3 md:pt-6 md:p-6">
             <div className="flex items-center gap-2 mb-2">
               <Users className="h-4 w-4 md:h-5 md:w-5 text-blue-500" />
               <span className="text-xs md:text-sm text-gray-500">Users</span>
             </div>
-            <div className="text-lg md:text-2xl font-bold">{statsLoading ? '...' : stats?.totalUsers}</div>
+            <div className="text-lg md:text-2xl font-bold">{statsLoading ? '...' : stats?.users?.total}</div>
           </CardContent>
         </Card>
 
@@ -164,7 +129,7 @@ export default function AdminPage() {
               <CreditCard className="h-4 w-4 md:h-5 md:w-5 text-green-500" />
               <span className="text-xs md:text-sm text-gray-500">Accounts</span>
             </div>
-            <div className="text-lg md:text-2xl font-bold">{statsLoading ? '...' : stats?.totalAccounts}</div>
+            <div className="text-lg md:text-2xl font-bold">{statsLoading ? '...' : stats?.accounts?.total}</div>
           </CardContent>
         </Card>
 
@@ -172,9 +137,9 @@ export default function AdminPage() {
           <CardContent className="p-3 md:pt-6 md:p-6">
             <div className="flex items-center gap-2 mb-2">
               <DollarSign className="h-4 w-4 md:h-5 md:w-5 text-yellow-500" />
-              <span className="text-xs md:text-sm text-gray-500">Loans</span>
+              <span className="text-xs md:text-sm text-gray-500">Active Loans</span>
             </div>
-            <div className="text-lg md:text-2xl font-bold">{statsLoading ? '...' : stats?.activeLoans}</div>
+            <div className="text-lg md:text-2xl font-bold">{statsLoading ? '...' : stats?.loans?.active}</div>
           </CardContent>
         </Card>
 
@@ -182,23 +147,29 @@ export default function AdminPage() {
           <CardContent className="p-3 md:pt-6 md:p-6">
             <div className="flex items-center gap-2 mb-2">
               <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-purple-500" />
-              <span className="text-xs md:text-sm text-gray-500">Deposits</span>
+              <span className="text-xs md:text-sm text-gray-500">Pending Orders</span>
             </div>
-            <div className="text-base md:text-2xl font-bold">
-              {statsLoading ? '...' : formatCurrency(stats?.totalDeposits || 0, 'EUR')}
-            </div>
+            <div className="text-lg md:text-2xl font-bold">{statsLoading ? '...' : stats?.orders?.pending}</div>
           </CardContent>
         </Card>
 
-        <Card className="col-span-2 md:col-span-1">
+        <Card>
           <CardContent className="p-3 md:pt-6 md:p-6">
             <div className="flex items-center gap-2 mb-2">
-              <DollarSign className="h-4 w-4 md:h-5 md:w-5 text-orange-500" />
-              <span className="text-xs md:text-sm text-gray-500">Portfolio</span>
+              <Clock className="h-4 w-4 md:h-5 md:w-5 text-orange-500" />
+              <span className="text-xs md:text-sm text-gray-500">Pending Loans</span>
             </div>
-            <div className="text-base md:text-2xl font-bold">
-              {statsLoading ? '...' : formatCurrency(stats?.totalLoanAmount || 0, 'EUR')}
+            <div className="text-lg md:text-2xl font-bold text-orange-600">{pendingRequests.length}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-3 md:pt-6 md:p-6">
+            <div className="flex items-center gap-2 mb-2">
+              <UserCheck className="h-4 w-4 md:h-5 md:w-5 text-blue-500" />
+              <span className="text-xs md:text-sm text-gray-500">Assigned</span>
             </div>
+            <div className="text-lg md:text-2xl font-bold text-blue-600">{assignedRequests.length}</div>
           </CardContent>
         </Card>
       </div>
@@ -212,10 +183,10 @@ export default function AdminPage() {
           </TabsTrigger>
           <TabsTrigger value="loans" className="gap-2 flex-1 sm:flex-none">
             <DollarSign className="h-4 w-4" />
-            <span className="hidden sm:inline">Pending Loans</span>
+            <span className="hidden sm:inline">Loan Requests</span>
             <span className="sm:hidden">Loans</span>
-            {pendingLoans && pendingLoans.length > 0 && (
-              <Badge className="ml-1 bg-orange-500">{pendingLoans.length}</Badge>
+            {allRequests.length > 0 && (
+              <Badge className="ml-1 bg-orange-500">{allRequests.length}</Badge>
             )}
           </TabsTrigger>
         </TabsList>
@@ -224,8 +195,8 @@ export default function AdminPage() {
         <TabsContent value="users" className="mt-4 md:mt-6">
           <Card>
             <CardHeader className="p-4 md:p-6">
-              <CardTitle className="text-lg md:text-xl">User Management</CardTitle>
-              <CardDescription className="text-xs md:text-sm">View and manage all registered users</CardDescription>
+              <CardTitle className="text-lg md:text-xl">Users Overview</CardTitle>
+              <CardDescription className="text-xs md:text-sm">View all registered users (manage accounts in Users & Accounts page)</CardDescription>
             </CardHeader>
             <CardContent className="p-0 md:p-6 md:pt-0">
               {usersLoading ? (
@@ -239,8 +210,7 @@ export default function AdminPage() {
                         <TableHead className="whitespace-nowrap hidden md:table-cell">Email</TableHead>
                         <TableHead className="whitespace-nowrap">Role</TableHead>
                         <TableHead className="whitespace-nowrap">Status</TableHead>
-                        <TableHead className="whitespace-nowrap hidden lg:table-cell">Email Verified</TableHead>
-                        <TableHead className="text-right whitespace-nowrap">Actions</TableHead>
+                        <TableHead className="whitespace-nowrap">Accounts</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -254,56 +224,10 @@ export default function AdminPage() {
                           </TableCell>
                           <TableCell className="hidden md:table-cell">{u.email}</TableCell>
                           <TableCell>{getRoleBadge(u.role)}</TableCell>
-                          <TableCell>{getStatusBadge(u.status)}</TableCell>
-                          <TableCell className="hidden lg:table-cell">
-                            {u.emailConfirmed ? (
-                              <Badge className="bg-green-100 text-green-800">Verified</Badge>
-                            ) : (
-                              <Badge variant="outline">Pending</Badge>
-                            )}
+                          <TableCell>{getStatusBadge(u.status || 'ACTIVE')}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{u.accountsCount || 0}</Badge>
                           </TableCell>
-                          <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              {u.status !== 'ACTIVE' && (
-                                <DropdownMenuItem
-                                  onClick={() =>
-                                    updateStatusMutation.mutate({ userId: u.id, status: 'ACTIVE' })
-                                  }
-                                >
-                                  <Check className="h-4 w-4 mr-2" />
-                                  Activate
-                                </DropdownMenuItem>
-                              )}
-                              {u.status !== 'SUSPENDED' && (
-                                <DropdownMenuItem
-                                  onClick={() =>
-                                    updateStatusMutation.mutate({ userId: u.id, status: 'SUSPENDED' })
-                                  }
-                                >
-                                  <UserCog className="h-4 w-4 mr-2" />
-                                  Suspend
-                                </DropdownMenuItem>
-                              )}
-                              {u.status !== 'CLOSED' && (
-                                <DropdownMenuItem
-                                  onClick={() =>
-                                    updateStatusMutation.mutate({ userId: u.id, status: 'CLOSED' })
-                                  }
-                                  className="text-red-600"
-                                >
-                                  <X className="h-4 w-4 mr-2" />
-                                  Close Account
-                                </DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -316,116 +240,63 @@ export default function AdminPage() {
           </Card>
         </TabsContent>
 
-        {/* Pending Loans Tab */}
+        {/* Loan Requests Tab */}
         <TabsContent value="loans" className="mt-6">
           <Card>
             <CardHeader className="p-4 md:p-6">
-              <CardTitle className="text-lg md:text-xl">Pending Loan Applications</CardTitle>
-              <CardDescription className="text-xs md:text-sm">Review and approve or reject loan applications</CardDescription>
+              <CardTitle className="text-lg md:text-xl">Loan Requests Overview</CardTitle>
+              <CardDescription className="text-xs md:text-sm">View all loan requests (processing is handled by managers)</CardDescription>
             </CardHeader>
             <CardContent className="p-0 md:p-6 md:pt-0">
               {loansLoading ? (
-                <div className="text-center py-8 text-gray-500">Loading loans...</div>
-              ) : pendingLoans && pendingLoans.length > 0 ? (
+                <div className="text-center py-8 text-gray-500">Loading loan requests...</div>
+              ) : allRequests.length > 0 ? (
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="whitespace-nowrap">Loan ID</TableHead>
+                        <TableHead className="whitespace-nowrap">Client</TableHead>
                         <TableHead className="text-right whitespace-nowrap">Amount</TableHead>
-                        <TableHead className="text-right whitespace-nowrap hidden md:table-cell">Interest</TableHead>
-                        <TableHead className="text-right whitespace-nowrap hidden lg:table-cell">Duration</TableHead>
-                        <TableHead className="text-right whitespace-nowrap hidden sm:table-cell">Monthly</TableHead>
+                        <TableHead className="text-right whitespace-nowrap hidden md:table-cell">Term</TableHead>
+                        <TableHead className="whitespace-nowrap hidden lg:table-cell">Purpose</TableHead>
+                        <TableHead className="whitespace-nowrap">Status</TableHead>
                         <TableHead className="whitespace-nowrap hidden lg:table-cell">Submitted</TableHead>
-                        <TableHead className="text-right whitespace-nowrap">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {pendingLoans.map((loan) => (
-                        <TableRow key={loan.id}>
-                          <TableCell className="font-mono text-xs">
-                            {loan.id.slice(0, 8)}...
+                      {allRequests.map((request: LoanRequest) => (
+                        <TableRow key={request.id}>
+                          <TableCell>
+                            <div className="font-medium text-sm">
+                              {request.user?.profile?.firstName} {request.user?.profile?.lastName || 'Client'}
+                            </div>
+                            <div className="text-xs text-gray-500">{request.user?.email}</div>
                           </TableCell>
                           <TableCell className="text-right font-medium whitespace-nowrap">
-                            {formatCurrency(loan.amount, 'EUR')}
+                            {formatCurrency(Number(request.requestedAmount), 'EUR')}
                           </TableCell>
                           <TableCell className="text-right hidden md:table-cell">
-                            {(loan.interestRate * 100).toFixed(2)}%
-                          </TableCell>
-                          <TableCell className="text-right hidden lg:table-cell">
-                            {loan.durationMonths} months
-                          </TableCell>
-                          <TableCell className="text-right hidden sm:table-cell whitespace-nowrap">
-                            {formatCurrency(loan.monthlyPayment, 'EUR')}
+                            {request.termMonths} months
                           </TableCell>
                           <TableCell className="hidden lg:table-cell">
-                            {new Date(loan.createdAt).toLocaleDateString()}
+                            <span className="text-sm text-gray-600 line-clamp-1">{request.purpose}</span>
                           </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-1 md:gap-2">
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button size="sm" className="gap-1 bg-green-600 hover:bg-green-700 h-7 md:h-8 text-xs md:text-sm px-2 md:px-3">
-                                    <Check className="h-3 w-3" />
-                                    <span className="hidden sm:inline">Approve</span>
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent className="max-w-[90vw] md:max-w-lg">
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Approve Loan</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Are you sure you want to approve this loan of{' '}
-                                      {formatCurrency(loan.amount, 'EUR')}?
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() => approveLoanMutation.mutate(loan.id)}
-                                    >
-                                      Approve
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button size="sm" variant="destructive" className="gap-1 h-7 md:h-8 text-xs md:text-sm px-2 md:px-3">
-                                    <X className="h-3 w-3" />
-                                    <span className="hidden sm:inline">Reject</span>
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent className="max-w-[90vw] md:max-w-lg">
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Reject Loan</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                    Are you sure you want to reject this loan application?
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => rejectLoanMutation.mutate(loan.id)}
-                                    className="bg-red-600 hover:bg-red-700"
-                                  >
-                                    Reject
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                          <TableCell>
+                            {getLoanStatusBadge(request.status)}
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell">
+                            {new Date(request.createdAt).toLocaleDateString()}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               ) : (
                 <div className="text-center py-8 text-gray-500">
                   <DollarSign className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg font-medium">No pending loans</p>
-                  <p className="text-sm mt-1">All loan applications have been processed</p>
+                  <p className="text-lg font-medium">No loan requests</p>
+                  <p className="text-sm mt-1">No loan applications at this time</p>
                 </div>
               )}
             </CardContent>

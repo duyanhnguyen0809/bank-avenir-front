@@ -36,10 +36,27 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     try {
       setError('');
+      console.log('Attempting login with:', data.email);
       await login(data);
-      router.push('/dashboard');
+      console.log('Login successful, redirecting...');
+      
+      // Get the user from the store after login
+      const user = useAuthStore.getState().user;
+      
+      // Redirect based on role
+      if (user?.role === 'ADMIN') {
+        router.push('/admin');
+      } else if (user?.role === 'MANAGER') {
+        router.push('/advisor');
+      } else {
+        router.push('/dashboard');
+      }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+      console.error('Login error:', err);
+      const errorMessage = err.response?.data?.message || err.message || 'Login failed. Please check your credentials.';
+      setError(errorMessage);
+      // Prevent any redirect on error
+      return;
     }
   };
 
