@@ -11,7 +11,6 @@ import {
   Users,
   DollarSign,
   TrendingUp,
-  MessageSquare,
   BarChart3,
   Clock,
   UserCheck,
@@ -124,13 +123,7 @@ export default function AdvisorDashboardPage() {
           <CardDescription>Common advisor tasks</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Link href="/conseiller">
-              <Button variant="outline" className="w-full h-24 flex flex-col gap-2">
-                <MessageSquare className="h-6 w-6 text-blue-600" />
-                <span>Chat with Clients</span>
-              </Button>
-            </Link>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Link href="/advisor/loans">
               <Button variant="outline" className="w-full h-24 flex flex-col gap-2">
                 <DollarSign className="h-6 w-6 text-green-600" />

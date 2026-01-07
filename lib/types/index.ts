@@ -297,3 +297,25 @@ export interface SavingsRate {
   rate: number;
   effectiveDate: string;
 }
+
+// News types
+export type NewsCategory = 'PRODUCTS' | 'SERVICES' | 'ANNOUNCEMENTS' | 'PROMOTIONS' | 'GENERAL';
+
+export interface News {
+  id: string;
+  title: string;
+  content: string;
+  category: NewsCategory;
+  isPublished: boolean;
+  authorId?: string;
+  author?: {
+    id: string;
+    email: string;
+    profile?: {
+      firstName: string;
+      lastName: string;
+    };
+  };
+  createdAt: string;
+  updatedAt?: string;
+}

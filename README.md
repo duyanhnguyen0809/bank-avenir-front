@@ -35,18 +35,20 @@ Visit: **http://localhost:3000**
 - **Accounts** - View accounts, check balances, open new accounts (Checking, Savings, Investment)
 - **Trading** - Browse securities, place buy/sell orders, view portfolio and order history
 - **Loans** - Apply for loans with payment calculator, track loan status and amortization
+- **News** - View bank news and announcements
 - **Chat** - Real-time messaging with bank advisors via WebSocket
 - **Notifications** - Live notifications via Server-Sent Events (SSE)
 
 ### Manager Features
-- **Client Management** - View assigned clients and their accounts
+- **Client Management** - View users and their accounts
 - **Loan Processing** - Review, approve, or reject loan requests
-- **Chat Support** - Respond to client inquiries in real-time
+- **Securities & Rates** - View securities and savings rates
 
 ### Admin Features
 - **User Management** - View all users and change user roles
 - **Securities Management** - Create, update, and manage tradeable securities
 - **Interest Rates** - Configure savings rates by account type
+- **News Management** - Create, edit, publish, and delete news articles
 - **System Overview** - Monitor pending loan requests and system stats
 
 ## Project Structure
@@ -59,10 +61,10 @@ app/
 │   ├── accounts/        # Account management
 │   ├── trading/         # Securities and orders
 │   ├── loans/           # Loan applications
+│   ├── news/            # Bank news and announcements
 │   ├── chat/            # Client chat
-│   ├── advisor/         # Manager chat interface
-│   ├── conseiller/      # Legacy manager interface
-│   └── admin/           # Admin panel (users, rates, securities)
+│   ├── advisor/         # Manager interface (loans, users, securities, rates)
+│   └── admin/           # Admin panel (users, rates, securities, news)
 ├── backend/             # API proxy routes (handles CORS)
 └── page.tsx             # Root redirect
 
@@ -126,6 +128,7 @@ The frontend uses a proxy pattern to avoid CORS issues:
 | /accounts          |   Y    |    Y    |   Y   |
 | /trading           |   Y    |    Y    |   Y   |
 | /loans             |   Y    |    Y    |   Y   |
+| /news              |   Y    |    -    |   -   |
 | /chat              |   Y    |    -    |   -   |
 | /advisor           |   -    |    Y    |   -   |
 | /admin/*           |   -    |    -    |   Y   |

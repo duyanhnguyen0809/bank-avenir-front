@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, CreditCard, TrendingUp, DollarSign, MessageSquare, Settings, Bell, X, UserCog, Users, MessageCircle, BarChart3, Percent, LayoutDashboard } from 'lucide-react';
+import { Home, CreditCard, TrendingUp, DollarSign, MessageSquare, Settings, Bell, X, UserCog, Users, MessageCircle, BarChart3, Percent, LayoutDashboard, Newspaper } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/lib/store/authStore';
 import { Button } from '@/components/ui/button';
@@ -13,11 +13,11 @@ const navigation = [
   { name: 'Accounts', href: '/accounts', icon: CreditCard, roles: ['CLIENT'] },
   { name: 'Trading', href: '/trading', icon: TrendingUp, roles: ['CLIENT'] },
   { name: 'Loans', href: '/loans', icon: DollarSign, roles: ['CLIENT'] },
+  { name: 'News', href: '/news', icon: Newspaper, roles: ['CLIENT'] },
   { name: 'Chat', href: '/chat', icon: MessageSquare, roles: ['CLIENT'] },
   { name: 'Notifications', href: '/notifications', icon: Bell, roles: ['CLIENT'] },
   // Manager tabs (Advisor)
   { name: 'Advisor Dashboard', href: '/advisor', icon: LayoutDashboard, roles: ['MANAGER'], exact: true },
-  { name: 'Chat Advisor', href: '/conseiller', icon: MessageSquare, roles: ['MANAGER'] },
   { name: 'Grant Loans', href: '/advisor/loans', icon: DollarSign, roles: ['MANAGER'] },
   { name: 'View Users', href: '/advisor/users', icon: Users, roles: ['MANAGER'] },
   { name: 'Securities', href: '/advisor/securities', icon: BarChart3, roles: ['MANAGER'] },
@@ -27,6 +27,7 @@ const navigation = [
   { name: 'Users & Accounts', href: '/admin/users', icon: Users, roles: ['ADMIN'] },
   { name: 'Securities', href: '/admin/securities', icon: BarChart3, roles: ['ADMIN'] },
   { name: 'Savings Rates', href: '/admin/rates', icon: Percent, roles: ['ADMIN'] },
+  { name: 'News', href: '/admin/news', icon: Newspaper, roles: ['ADMIN'] },
   { name: 'All Chats', href: '/admin/chats', icon: MessageCircle, roles: ['ADMIN'] },
 ];
 

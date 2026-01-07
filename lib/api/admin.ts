@@ -1,5 +1,5 @@
 import api from './client';
-import { DashboardStats, User, Loan, Notification } from '@/lib/types';
+import { DashboardStats, User, Loan, Notification, News, NewsCategory } from '@/lib/types';
 import { USE_MOCK_API } from '@/lib/config';
 
 // Shared state for notifications (accessible for testing)
@@ -308,5 +308,98 @@ export const adminApi = {
   deleteStock: async (symbol: string) => {
     const response = await api.delete(`/admin/stocks/${symbol}`);
     return response.data;
+  },
+
+  // ========== NEWS MANAGEMENT (ADMIN ONLY) ==========
+
+  // GET /news - Get all news (all authenticated users can read)
+  getAllNews: async (limit?: number): Promise<News[]> => {
+    if (USE_MOCK_API) {
+      return [
+        {
+          id: '1',
+          title: 'New Investment Products Available',
+          content: 'We are pleased to announce the launch of new sustainable investment products with competitive rates.',
+          category: 'PRODUCTS',
+          isPublished: true,
+          createdAt: '2025-01-10T10:00:00Z',
+        },
+        {
+          id: '2',
+          title: 'Holiday Schedule Update',
+          content: 'Please note our updated branch hours during the holiday season.',
+          category: 'ANNOUNCEMENTS',
+          isPublished: true,
+          createdAt: '2025-01-08T14:30:00Z',
+        },
+      ];
+    }
+    const params = limit ? `?limit=${limit}` : '';
+    const response = await api.get(`/news${params}`);
+    return response.data.news || response.data;
+  },
+
+  // GET /news/:id - Get news by ID
+  getNewsById: async (id: string): Promise<News> => {
+    if (USE_MOCK_API) {
+      return {
+        id,
+        title: 'Sample News Article',
+        content: 'This is a sample news article content.',
+        category: 'GENERAL',
+        isPublished: true,
+        createdAt: new Date().toISOString(),
+      };
+    }
+    const response = await api.get(`/news/${id}`);
+    return response.data.news || response.data;
+  },
+
+  // POST /news - Create news (ADMIN only)
+  createNews: async (data: {
+    title: string;
+    content: string;
+    category: NewsCategory;
+  }): Promise<News> => {
+    if (USE_MOCK_API) {
+      return {
+        id: Date.now().toString(),
+        ...data,
+        isPublished: true,
+        createdAt: new Date().toISOString(),
+      };
+    }
+    const response = await api.post('/news', data);
+    return response.data.news || response.data;
+  },
+
+  // PUT /news/:id - Update news (ADMIN only)
+  updateNews: async (id: string, data: {
+    title?: string;
+    content?: string;
+    category?: NewsCategory;
+    isPublished?: boolean;
+  }): Promise<News> => {
+    if (USE_MOCK_API) {
+      return {
+        id,
+        title: data.title || 'Updated News',
+        content: data.content || 'Updated content',
+        category: data.category || 'GENERAL',
+        isPublished: data.isPublished ?? true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+    }
+    const response = await api.put(`/news/${id}`, data);
+    return response.data.news || response.data;
+  },
+
+  // DELETE /news/:id - Delete news (ADMIN only)
+  deleteNews: async (id: string): Promise<void> => {
+    if (USE_MOCK_API) {
+      return;
+    }
+    await api.delete(`/news/${id}`);
   },
 };
