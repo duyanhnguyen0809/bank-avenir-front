@@ -49,8 +49,9 @@ export default function OrdersPage() {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       toast.success('Order cancelled successfully');
     },
-    onError: () => {
-      toast.error('Failed to cancel order');
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to cancel order';
+      toast.error(errorMessage);
     },
   });
 

@@ -28,7 +28,10 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      if (typeof window !== 'undefined') {
+      // Don't redirect if this is an auth endpoint (login/register)
+      const isAuthEndpoint = error.config?.url?.startsWith('/auth/');
+
+      if (!isAuthEndpoint && typeof window !== 'undefined') {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('user');
         window.location.href = '/login';

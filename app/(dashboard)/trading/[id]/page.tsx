@@ -101,7 +101,8 @@ export default function SecurityDetailPage({ params }: { params: Promise<{ id: s
       router.push('/trading/orders');
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to place order');
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to place order';
+      toast.error(errorMessage);
     },
   });
 

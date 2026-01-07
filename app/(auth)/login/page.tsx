@@ -53,9 +53,23 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       console.error('Login error:', err);
-      const errorMessage = err.response?.data?.message || err.message || 'Login failed. Please check your credentials.';
+      let errorMessage = 'Login failed. Please check your credentials.';
+
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.response?.status === 401) {
+        errorMessage = 'Invalid email or password.';
+      } else if (err.response?.status === 403) {
+        errorMessage = 'Your account is not confirmed. Please check your email.';
+      } else if (err.response?.status === 404) {
+        errorMessage = 'Account not found. Please check your email address.';
+      } else if (err.code === 'ERR_NETWORK') {
+        errorMessage = 'Unable to connect to server. Please try again later.';
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
       setError(errorMessage);
-      // Prevent any redirect on error
       return;
     }
   };
@@ -115,7 +129,7 @@ export default function LoginPage() {
                 </Link>
               </p>
               <p className="text-xs text-gray-500">
-                Test account: client@bank-avenir.com / Client123!
+                Test: client@avenir.com / SecurePass123!
               </p>
             </div>
           </form>
